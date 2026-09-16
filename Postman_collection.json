@@ -1,0 +1,281 @@
+{
+  "info": {
+    "_postman_id": "7c5f8f1e-5b2a-4c6d-9b1a-blog-management-api",
+    "name": "Blog Management API - Complete Collection",
+    "description": "Postman collection for the Blog Management API using FastAPI. Covers authentication, post CRUD, comments, likes/unlikes, JWT authorization, ownership-protected operations, and public read operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "post_id",
+      "value": "1"
+    },
+    {
+      "key": "comment_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Test@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let data = pm.response.json();",
+                  "if (data.access_token) {",
+                  "    pm.collectionVariables.set('token', data.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "Test@123",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "My First Blog Post",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "This is my first blog post created through the API.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{base_url}}/posts/"
+          }
+        },
+        {
+          "name": "Get Posts",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/posts/"
+          }
+        },
+        {
+          "name": "Get Single Post",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/posts/{{post_id}}"
+          }
+        },
+        {
+          "name": "Update Own Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Updated Blog Post",
+                  "type": "text"
+                },
+                {
+                  "key": "content",
+                  "value": "Updated content for my blog post.",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{base_url}}/posts/{{post_id}}"
+          }
+        },
+        {
+          "name": "Delete Own Post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/posts/{{post_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Nice blog post!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/comments/{{post_id}}"
+          }
+        },
+        {
+          "name": "Get Comments",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/comments/{{post_id}}"
+          }
+        },
+        {
+          "name": "Delete Own Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/comments/{{comment_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Likes",
+      "item": [
+        {
+          "name": "Like Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/likes/{{post_id}}"
+          }
+        },
+        {
+          "name": "Unlike Post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{base_url}}/likes/{{post_id}}"
+          }
+        }
+      ]
+    }
+  ]
+}

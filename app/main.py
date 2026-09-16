@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
 from app import models
@@ -13,6 +14,10 @@ app = FastAPI(
     description="Mini Blog Management System using FastAPI",
     version="1.0.0"
 )
+
+
+# Serve uploaded images
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 
 # Authentication routes

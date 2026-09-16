@@ -40,6 +40,7 @@ class PostResponse(BaseModel):
     id: int
     title: str
     content: str
+    image: str | None = None
     author_id: int
     created_at: datetime
 
