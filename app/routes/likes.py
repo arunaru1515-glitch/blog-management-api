@@ -13,15 +13,24 @@ router = APIRouter(
 )
 
 
-# Like a post
+# ============================================================
+# LIKE A POST
+# TASK 3 - SUBSCRIPTION LIKE LIMIT
+# ============================================================
+
 @router.post("/{post_id}")
 def like_post(
     post_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    # Check if post exists
-    post = db.query(Post).filter(Post.id == post_id).first()
+    # ========================================================
+    # CHECK IF POST EXISTS
+    # ========================================================
+
+    post = db.query(Post).filter(
+        Post.id == post_id
+    ).first()
 
     if not post:
         raise HTTPException(
@@ -29,7 +38,22 @@ def like_post(
             detail="Post not found"
         )
 
-    # Check if user already liked the post
+    # ========================================================
+    # CHECK ACTIVE SUBSCRIPTION
+    # ========================================================
+
+    plan = current_user.subscription_plan
+
+    if not plan:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have an active subscription plan."
+        )
+
+    # ========================================================
+    # CHECK IF USER ALREADY LIKED THIS POST
+    # ========================================================
+
     existing_like = db.query(Like).filter(
         Like.post_id == post_id,
         Like.user_id == current_user.id
@@ -41,7 +65,27 @@ def like_post(
             detail="Post already liked"
         )
 
-    # Create like
+    # ========================================================
+    # TASK 3 - CHECK LIKE LIMIT
+    # ========================================================
+
+    existing_likes_count = db.query(Like).filter(
+        Like.user_id == current_user.id
+    ).count()
+
+    if (
+        plan.max_likes is not None
+        and existing_likes_count >= plan.max_likes
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="You've reached your plan limit. Kindly upgrade your plan to continue."
+        )
+
+    # ========================================================
+    # CREATE LIKE
+    # ========================================================
+
     like = Like(
         post_id=post_id,
         user_id=current_user.id
@@ -51,7 +95,10 @@ def like_post(
     db.commit()
     db.refresh(like)
 
-    # Send email notification to post owner
+    # ========================================================
+    # SEND EMAIL NOTIFICATION
+    # ========================================================
+
     send_email(
         to_email=post.author.email,
         subject="New Like on Your Post",
@@ -68,15 +115,23 @@ def like_post(
     }
 
 
-# Unlike a post
+# ============================================================
+# UNLIKE A POST
+# ============================================================
+
 @router.delete("/{post_id}")
 def unlike_post(
     post_id: int,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    # Check if post exists
-    post = db.query(Post).filter(Post.id == post_id).first()
+    # ========================================================
+    # CHECK IF POST EXISTS
+    # ========================================================
+
+    post = db.query(Post).filter(
+        Post.id == post_id
+    ).first()
 
     if not post:
         raise HTTPException(
@@ -84,7 +139,10 @@ def unlike_post(
             detail="Post not found"
         )
 
-    # Find user's like
+    # ========================================================
+    # FIND USER'S LIKE
+    # ========================================================
+
     like = db.query(Like).filter(
         Like.post_id == post_id,
         Like.user_id == current_user.id
@@ -96,7 +154,10 @@ def unlike_post(
             detail="Post not liked yet"
         )
 
-    # Remove like
+    # ========================================================
+    # REMOVE LIKE
+    # ========================================================
+
     db.delete(like)
     db.commit()
 

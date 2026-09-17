@@ -24,12 +24,19 @@ router = APIRouter(
 )
 
 
-# Image upload folder
+# ============================================================
+# IMAGE UPLOAD FOLDER
+# ============================================================
+
 UPLOAD_DIR = "media/posts"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-# Create a post with optional image
+# ============================================================
+# CREATE POST
+# TASK 1/2 + TASK 3 SUBSCRIPTION ACCESS CONTROL
+# ============================================================
+
 @router.post("/", response_model=PostResponse)
 def create_post(
     title: str = Form(..., min_length=1, max_length=200),
@@ -38,11 +45,65 @@ def create_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # ========================================================
+    # TASK 3 - CHECK ACTIVE SUBSCRIPTION
+    # ========================================================
+
+    plan = current_user.subscription_plan
+
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have an active subscription plan."
+        )
+
+    # ========================================================
+    # TASK 3 - CHECK MAXIMUM POSTS LIMIT
+    # ========================================================
+
+    existing_posts_count = db.query(Post).filter(
+        Post.author_id == current_user.id
+    ).count()
+
+    if (
+        plan.max_posts is not None
+        and existing_posts_count >= plan.max_posts
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You've reached your plan limit. Kindly upgrade your plan to continue."
+        )
+
+    # ========================================================
+    # TASK 3 - CHECK IMAGE LIMIT
+    # ========================================================
+
     image_path = None
 
     if image:
-        allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if (
+            plan.max_images_per_post is not None
+            and plan.max_images_per_post < 1
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Image uploads are not available on your current plan. Kindly upgrade your plan to continue."
+            )
+
+        # Allowed image formats
+        allowed_extensions = {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp"
+        }
+
+        file_extension = os.path.splitext(
+            image.filename
+        )[1].lower()
 
         if file_extension not in allowed_extensions:
             raise HTTPException(
@@ -50,13 +111,23 @@ def create_post(
                 detail="Only JPG, JPEG, PNG, GIF and WEBP images are allowed"
             )
 
+        # Generate unique filename
         filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
 
+        file_path = os.path.join(
+            UPLOAD_DIR,
+            filename
+        )
+
+        # Save image
         with open(file_path, "wb") as buffer:
             buffer.write(image.file.read())
 
         image_path = f"/media/posts/{filename}"
+
+    # ========================================================
+    # CREATE POST
+    # ========================================================
 
     new_post = Post(
         title=title,
@@ -72,7 +143,11 @@ def create_post(
     return new_post
 
 
-# View posts with pagination and search
+# ============================================================
+# GET POSTS
+# SEARCH + PAGINATION
+# ============================================================
+
 @router.get("/")
 def get_posts(
     page: int = 1,
@@ -80,6 +155,7 @@ def get_posts(
     search: str | None = None,
     db: Session = Depends(get_db)
 ):
+
     # Validate page
     if page < 1:
         raise HTTPException(
@@ -97,20 +173,34 @@ def get_posts(
     # Base query
     query = db.query(Post)
 
-    # Search by title or content
+    # ========================================================
+    # SEARCH BY TITLE OR CONTENT
+    # ========================================================
+
     if search:
         query = query.filter(
             (Post.title.ilike(f"%{search}%")) |
             (Post.content.ilike(f"%{search}%"))
         )
 
-    # Get total matching posts
+    # ========================================================
+    # TOTAL MATCHING POSTS
+    # ========================================================
+
     total_count = query.count()
 
-    # Calculate total pages
-    total_pages = (total_count + limit - 1) // limit
+    # ========================================================
+    # TOTAL PAGES
+    # ========================================================
 
-    # Apply pagination
+    total_pages = (
+        (total_count + limit - 1) // limit
+    )
+
+    # ========================================================
+    # PAGINATION
+    # ========================================================
+
     posts = query.offset(
         (page - 1) * limit
     ).limit(limit).all()
@@ -124,13 +214,19 @@ def get_posts(
     }
 
 
-# View a single post
+# ============================================================
+# GET SINGLE POST
+# ============================================================
+
 @router.get("/{post_id}", response_model=PostResponse)
 def get_post(
     post_id: int,
     db: Session = Depends(get_db)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+
+    post = db.query(Post).filter(
+        Post.id == post_id
+    ).first()
 
     if not post:
         raise HTTPException(
@@ -141,7 +237,10 @@ def get_post(
     return post
 
 
-# Update own post with optional image
+# ============================================================
+# UPDATE OWN POST
+# ============================================================
+
 @router.put("/{post_id}", response_model=PostResponse)
 def update_post(
     post_id: int,
@@ -151,13 +250,24 @@ def update_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+
+    # ========================================================
+    # FIND POST
+    # ========================================================
+
+    post = db.query(Post).filter(
+        Post.id == post_id
+    ).first()
 
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
+
+    # ========================================================
+    # CHECK POST OWNER
+    # ========================================================
 
     if post.author_id != current_user.id:
         raise HTTPException(
@@ -165,12 +275,48 @@ def update_post(
             detail="You can only update your own posts"
         )
 
+    # ========================================================
+    # UPDATE TEXT
+    # ========================================================
+
     post.title = title
     post.content = content
 
+    # ========================================================
+    # UPDATE IMAGE
+    # ========================================================
+
     if image:
-        allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        plan = current_user.subscription_plan
+
+        if not plan:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have an active subscription plan."
+            )
+
+        if (
+            plan.max_images_per_post is not None
+            and plan.max_images_per_post < 1
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Image uploads are not available on your current plan. Kindly upgrade your plan to continue."
+            )
+
+        # Allowed image formats
+        allowed_extensions = {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp"
+        }
+
+        file_extension = os.path.splitext(
+            image.filename
+        )[1].lower()
 
         if file_extension not in allowed_extensions:
             raise HTTPException(
@@ -178,13 +324,23 @@ def update_post(
                 detail="Only JPG, JPEG, PNG, GIF and WEBP images are allowed"
             )
 
+        # Generate unique filename
         filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, filename)
 
+        file_path = os.path.join(
+            UPLOAD_DIR,
+            filename
+        )
+
+        # Save image
         with open(file_path, "wb") as buffer:
             buffer.write(image.file.read())
 
         post.image = f"/media/posts/{filename}"
+
+    # ========================================================
+    # SAVE CHANGES
+    # ========================================================
 
     db.commit()
     db.refresh(post)
@@ -192,14 +348,24 @@ def update_post(
     return post
 
 
-# Delete own post
+# ============================================================
+# DELETE OWN POST
+# ============================================================
+
 @router.delete("/{post_id}")
 def delete_post(
     post_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    post = db.query(Post).filter(Post.id == post_id).first()
+
+    # ========================================================
+    # FIND POST
+    # ========================================================
+
+    post = db.query(Post).filter(
+        Post.id == post_id
+    ).first()
 
     if not post:
         raise HTTPException(
@@ -207,11 +373,19 @@ def delete_post(
             detail="Post not found"
         )
 
+    # ========================================================
+    # CHECK POST OWNER
+    # ========================================================
+
     if post.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own posts"
         )
+
+    # ========================================================
+    # DELETE POST
+    # ========================================================
 
     db.delete(post)
     db.commit()

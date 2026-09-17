@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.database import Base, engine
 from app import models
-from app.routes import auth, posts, comments, likes
+from app.routes import auth, posts, comments, likes, subscriptions
 
 
 Base.metadata.create_all(bind=engine)
@@ -31,6 +31,9 @@ app.include_router(comments.router)
 
 # Like routes
 app.include_router(likes.router)
+
+# Subscription routes
+app.include_router(subscriptions.router)
 
 
 @app.get("/")
