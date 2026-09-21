@@ -5,7 +5,6 @@ from email.message import EmailMessage
 
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 
@@ -15,9 +14,12 @@ def send_email(
     body: str
 ):
     sender_email = os.getenv("EMAIL_ADDRESS")
-    sender_password = os.getenv("EMAIL_PASSWORD")
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", 587))
 
-    if not sender_email or not sender_password:
+    if not sender_email or not smtp_username or not smtp_password:
         print("Email configuration is missing")
         return
 
@@ -38,21 +40,17 @@ def send_email(
     message.set_content(email_body)
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()
 
             server.login(
-                sender_email,
-                sender_password
+                smtp_username,
+                smtp_password
             )
 
             server.send_message(message)
 
-        print(
-            f"Email sent successfully to {to_email}"
-        )
+        print(f"Email sent successfully to {to_email}")
 
     except Exception as e:
-        print(
-            f"Email sending failed: {e}"
-        )
+        print(f"Email sending failed: {e}")
