@@ -1,6 +1,8 @@
 import os
 import smtplib
+from datetime import datetime
 from email.message import EmailMessage
+
 from dotenv import load_dotenv
 
 
@@ -20,18 +22,37 @@ def send_email(
         return
 
     message = EmailMessage()
+
     message["From"] = sender_email
     message["To"] = to_email
     message["Subject"] = subject
-    message.set_content(body)
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    email_body = (
+        f"{body}\n\n"
+        f"Timestamp: {timestamp}\n\n"
+        f"Blog Management API"
+    )
+
+    message.set_content(email_body)
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
-            server.login(sender_email, sender_password)
+
+            server.login(
+                sender_email,
+                sender_password
+            )
+
             server.send_message(message)
 
-        print(f"Email sent successfully to {to_email}")
+        print(
+            f"Email sent successfully to {to_email}"
+        )
 
     except Exception as e:
-        print(f"Email sending failed: {e}")
+        print(
+            f"Email sending failed: {e}"
+        )

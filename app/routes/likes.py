@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Like, Post
 from app.dependencies import get_current_user
-from app.email_service import send_email
+from app.notification_service import send_like_notification
 
 
 router = APIRouter(
@@ -15,15 +15,16 @@ router = APIRouter(
 
 # ============================================================
 # LIKE A POST
-# TASK 3 - SUBSCRIPTION LIKE LIMIT
 # ============================================================
 
 @router.post("/{post_id}")
 def like_post(
     post_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
+
     # ========================================================
     # CHECK IF POST EXISTS
     # ========================================================
@@ -66,7 +67,7 @@ def like_post(
         )
 
     # ========================================================
-    # TASK 3 - CHECK LIKE LIMIT
+    # CHECK LIKE LIMIT
     # ========================================================
 
     existing_likes_count = db.query(Like).filter(
@@ -96,18 +97,14 @@ def like_post(
     db.refresh(like)
 
     # ========================================================
-    # SEND EMAIL NOTIFICATION
+    # SEND LIKE NOTIFICATION IN BACKGROUND
     # ========================================================
 
-    send_email(
-        to_email=post.author.email,
-        subject="New Like on Your Post",
-        body=(
-            f"Hello {post.author.username},\n\n"
-            f"User {current_user.username} liked your post "
-            f"'{post.title}'.\n\n"
-            f"Blog Management API"
-        )
+    background_tasks.add_task(
+        send_like_notification,
+        post_title=post.title,
+        liker_name=current_user.username,
+        post_owner_email=post.author.email
     )
 
     return {
@@ -125,6 +122,7 @@ def unlike_post(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
+
     # ========================================================
     # CHECK IF POST EXISTS
     # ========================================================

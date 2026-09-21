@@ -5,7 +5,7 @@ from app.database import get_db
 from app.models import Comment, Post
 from app.schemas import CommentCreate, CommentResponse
 from app.dependencies import get_current_user
-from app.email_service import send_email
+from app.notification_service import send_comment_notification
 
 
 router = APIRouter(
@@ -16,7 +16,6 @@ router = APIRouter(
 
 # ============================================================
 # ADD A COMMENT TO A POST
-# TASK 3 - SUBSCRIPTION COMMENT LIMIT
 # ============================================================
 
 @router.post("/{post_id}", response_model=CommentResponse)
@@ -43,7 +42,7 @@ def add_comment(
         )
 
     # ========================================================
-    # TASK 3 - CHECK ACTIVE SUBSCRIPTION
+    # CHECK ACTIVE SUBSCRIPTION
     # ========================================================
 
     plan = current_user.subscription_plan
@@ -55,7 +54,7 @@ def add_comment(
         )
 
     # ========================================================
-    # TASK 3 - CHECK COMMENT LIMIT
+    # CHECK COMMENT LIMIT
     # ========================================================
 
     existing_comments_count = db.query(Comment).filter(
@@ -86,20 +85,15 @@ def add_comment(
     db.refresh(comment)
 
     # ========================================================
-    # SEND EMAIL NOTIFICATION IN BACKGROUND
+    # SEND COMMENT NOTIFICATION IN BACKGROUND
     # ========================================================
 
     background_tasks.add_task(
-        send_email,
-        to_email=post.author.email,
-        subject="New Comment on Your Post",
-        body=(
-            f"Hello {post.author.username},\n\n"
-            f"User {current_user.username} commented on your post "
-            f"'{post.title}'.\n\n"
-            f"Comment: {comment_data.text}\n\n"
-            f"Blog Management API"
-        )
+        send_comment_notification,
+        post_title=post.title,
+        commenter_name=current_user.username,
+        comment_text=comment_data.text,
+        post_owner_email=post.author.email
     )
 
     return comment
