@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.database import Base, engine
 from app import models
-from app.routes import auth, posts, comments, likes, subscriptions
+from app.routes import auth, posts, comments, likes, subscriptions, dashboard
 
 
 Base.metadata.create_all(bind=engine)
@@ -34,6 +35,15 @@ app.include_router(likes.router)
 
 # Subscription routes
 app.include_router(subscriptions.router)
+
+# User Dashboard API routes
+app.include_router(dashboard.router)
+
+
+# Dashboard frontend page
+@app.get("/dashboard")
+def dashboard_page():
+    return FileResponse("app/templates/dashboard.html")
 
 
 @app.get("/")

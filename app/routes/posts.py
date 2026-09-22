@@ -216,6 +216,7 @@ def get_posts(
 
 # ============================================================
 # GET SINGLE POST
+# OPTIONAL FEATURE - POST VIEW TRACKING
 # ============================================================
 
 @router.get("/{post_id}", response_model=PostResponse)
@@ -233,6 +234,15 @@ def get_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
+
+    # ========================================================
+    # OPTIONAL - INCREMENT POST VIEW COUNT
+    # ========================================================
+
+    post.views += 1
+
+    db.commit()
+    db.refresh(post)
 
     return post
 

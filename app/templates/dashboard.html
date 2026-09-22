@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Blog Pulse - User Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 35px;
+            font-family: Arial, sans-serif;
+            background: #f4f7f6;
+            color: #243447;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: auto;
+        }
+
+        /* ================================
+           HEADER
+        ================================= */
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .small-title {
+            color: #ef6c4d;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-family: Georgia, serif;
+            font-size: 42px;
+            color: #243447;
+        }
+
+        .welcome {
+            margin-top: 8px;
+            color: #667085;
+        }
+
+        /* ================================
+           TOKEN SECTION
+        ================================= */
+
+        .token-section {
+            background: #13233f;
+            padding: 14px;
+            border-radius: 7px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .token-section input {
+            flex: 1;
+            padding: 11px 12px;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .token-section button {
+            padding: 11px 20px;
+            border: none;
+            border-radius: 4px;
+            background: #ef6c4d;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .token-section button:hover {
+            opacity: 0.9;
+        }
+
+        /* ================================
+           MESSAGE
+        ================================= */
+
+        #message {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* ================================
+           STAT CARDS
+        ================================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 7px;
+            min-height: 105px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 12px;
+            color: #667085;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 30px;
+            font-weight: bold;
+            color: #243447;
+        }
+
+        .views-card {
+            width: 25%;
+            margin-bottom: 25px;
+        }
+
+        /* ================================
+           CHART GRID
+        ================================= */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 7px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .chart-card h2 {
+            margin: 0 0 15px;
+            font-size: 18px;
+            color: #243447;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .donut-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        /* ================================
+           RESPONSIVE
+        ================================= */
+
+        @media (max-width: 900px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .views-card {
+                width: 100%;
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 20px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .token-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================================
+         HEADER
+    ================================= -->
+
+    <div class="header">
+
+        <div class="small-title">
+            Personal Analytics
+        </div>
+
+        <h1>
+            Blog Pulse
+        </h1>
+
+        <div class="welcome" id="welcomeText">
+            Enter your JWT token to view your dashboard.
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         JWT TOKEN
+    ================================= -->
+
+    <div class="token-section">
+
+        <input
+            type="password"
+            id="token"
+            placeholder="Paste JWT token here"
+        >
+
+        <button onclick="loadDashboard()">
+            View Dashboard
+        </button>
+
+    </div>
+
+
+    <div id="message"></div>
+
+
+    <!-- ================================
+         STATISTICS CARDS
+    ================================= -->
+
+    <div class="cards">
+
+        <!-- Posts Created -->
+
+        <div class="card">
+
+            <h3>
+                Posts Created
+            </h3>
+
+            <p id="totalPosts">
+                0
+            </p>
+
+        </div>
+
+
+        <!-- Comments Made -->
+
+        <div class="card">
+
+            <h3>
+                Comments Made
+            </h3>
+
+            <p id="totalComments">
+                0
+            </p>
+
+        </div>
+
+
+        <!-- Likes Made -->
+
+        <div class="card">
+
+            <h3>
+                Likes Made
+            </h3>
+
+            <p id="totalLikesMade">
+                0
+            </p>
+
+        </div>
+
+
+        <!-- Likes Received -->
+
+        <div class="card">
+
+            <h3>
+                Likes Received
+            </h3>
+
+            <p id="totalLikesReceived">
+                0
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================
+         POST VIEWS
+    ================================= -->
+
+    <div class="card views-card">
+
+        <h3>
+            Post Views
+        </h3>
+
+        <p id="totalViews">
+            0
+        </p>
+
+    </div>
+
+
+    <!-- ================================
+         CHARTS
+    ================================= -->
+
+    <div class="charts">
+
+        <!-- Activity at a glance -->
+
+        <div class="chart-card">
+
+            <h2>
+                Activity at a glance
+            </h2>
+
+            <div class="chart-wrapper">
+
+                <canvas id="activityChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- Activity mix -->
+
+        <div class="chart-card">
+
+            <h2>
+                Activity mix
+            </h2>
+
+            <div class="donut-wrapper">
+
+                <canvas id="activityMixChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    let activityChart = null;
+    let activityMixChart = null;
+
+
+    // ============================================================
+    // LOAD USER DASHBOARD
+    // ============================================================
+
+    async function loadDashboard() {
+
+        const token =
+            document.getElementById("token").value.trim();
+
+        const message =
+            document.getElementById("message");
+
+
+        // Check token
+
+        if (!token) {
+
+            message.innerText =
+                "Please enter your JWT token.";
+
+            message.style.color = "#dc2626";
+
+            return;
+        }
+
+
+        message.innerText =
+            "Loading dashboard...";
+
+        message.style.color = "#667085";
+
+
+        try {
+
+            // ====================================================
+            // CALL USER DASHBOARD API
+            // ====================================================
+
+            const response = await fetch(
+                "/user/dashboard",
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+            // ====================================================
+            // HANDLE ERROR
+            // ====================================================
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to load dashboard";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {
+                    // Ignore JSON parsing error
+                }
+
+                throw new Error(errorMessage);
+            }
+
+
+            // ====================================================
+            // GET JSON DATA
+            // ====================================================
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                "Dashboard Data:",
+                data
+            );
+
+
+            // ====================================================
+            // UPDATE USER INFORMATION
+            // ====================================================
+
+            document.getElementById(
+                "welcomeText"
+            ).innerText =
+                "Welcome back, " +
+                data.username;
+
+
+            // ====================================================
+            // UPDATE STATISTICS
+            // ====================================================
+
+            document.getElementById(
+                "totalPosts"
+            ).innerText =
+                data.total_posts || 0;
+
+
+            document.getElementById(
+                "totalComments"
+            ).innerText =
+                data.total_comments || 0;
+
+
+            document.getElementById(
+                "totalLikesMade"
+            ).innerText =
+                data.total_likes_made || 0;
+
+
+            document.getElementById(
+                "totalLikesReceived"
+            ).innerText =
+                data.total_likes_received || 0;
+
+
+            document.getElementById(
+                "totalViews"
+            ).innerText =
+                data.total_views || 0;
+
+
+            // ====================================================
+            // PREPARE POST DATA
+            // ====================================================
+
+            const posts =
+                data.posts || [];
+
+
+            const postTitles =
+                posts.map(
+                    post => post.title
+                );
+
+
+            const likesReceived =
+                posts.map(
+                    post => post.likes || 0
+                );
+
+
+            const commentsReceived =
+                posts.map(
+                    post => post.comments || 0
+                );
+
+
+            const postViews =
+                posts.map(
+                    post => post.views || 0
+                );
+
+
+            // ====================================================
+            // DESTROY EXISTING BAR CHART
+            // ====================================================
+
+            if (activityChart) {
+
+                activityChart.destroy();
+
+            }
+
+
+            // ====================================================
+            // ACTIVITY BAR CHART
+            // ====================================================
+
+            const activityContext =
+                document
+                    .getElementById(
+                        "activityChart"
+                    )
+                    .getContext("2d");
+
+
+            activityChart =
+                new Chart(
+                    activityContext,
+                    {
+
+                        type: "bar",
+
+                        data: {
+
+                            labels: [
+                                "Posts Created",
+                                "Comments Made",
+                                "Likes Made",
+                                "Likes Received"
+                            ],
+
+                            datasets: [
+                                {
+
+                                    label:
+                                        "Activity",
+
+                                    data: [
+                                        data.total_posts || 0,
+                                        data.total_comments || 0,
+                                        data.total_likes_made || 0,
+                                        data.total_likes_received || 0
+                                    ],
+
+                                    borderWidth: 1
+
+                                }
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero: true,
+
+                                    ticks: {
+                                        precision: 0
+                                    }
+
+                                }
+
+                            },
+
+                            plugins: {
+
+                                legend: {
+                                    display: false
+                                },
+
+                                title: {
+                                    display: false
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+            // ====================================================
+            // DESTROY EXISTING DONUT CHART
+            // ====================================================
+
+            if (activityMixChart) {
+
+                activityMixChart.destroy();
+
+            }
+
+
+            // ====================================================
+            // ACTIVITY MIX DONUT CHART
+            // ====================================================
+
+            const mixContext =
+                document
+                    .getElementById(
+                        "activityMixChart"
+                    )
+                    .getContext("2d");
+
+
+            activityMixChart =
+                new Chart(
+                    mixContext,
+                    {
+
+                        type: "doughnut",
+
+                        data: {
+
+                            labels: [
+                                "Posts Created",
+                                "Comments Made",
+                                "Likes Made",
+                                "Likes Received"
+                            ],
+
+                            datasets: [
+                                {
+
+                                    data: [
+                                        data.total_posts || 0,
+                                        data.total_comments || 0,
+                                        data.total_likes_made || 0,
+                                        data.total_likes_received || 0
+                                    ],
+
+                                    borderWidth: 2
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            cutout: "55%",
+
+                            plugins: {
+
+                                legend: {
+
+                                    position: "bottom"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+            // ====================================================
+            // SUCCESS MESSAGE
+            // ====================================================
+
+            message.innerText =
+                "Dashboard loaded successfully.";
+
+            message.style.color =
+                "#15803d";
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Dashboard Error:",
+                error
+            );
+
+            message.innerText =
+                "Error: " + error.message;
+
+            message.style.color =
+                "#dc2626";
+
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
