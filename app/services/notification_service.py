@@ -1,6 +1,39 @@
-from datetime import datetime
-from app.email_service import send_email
+﻿from datetime import datetime
 
+from sqlalchemy.orm import Session
+
+from app.models.notification import Notification
+from app.services.email_service import send_email
+
+
+# ============================================================
+# CREATE IN-APP NOTIFICATION
+# ============================================================
+
+def create_notification(
+    db: Session,
+    user_id: int,
+    message: str,
+    notification_type: str
+):
+    notification = Notification(
+        user_id=user_id,
+        message=message,
+        notification_type=notification_type,
+        is_read=False,
+        created_at=datetime.utcnow()
+    )
+
+    db.add(notification)
+    db.commit()
+    db.refresh(notification)
+
+    return notification
+
+
+# ============================================================
+# COMMENT NOTIFICATION
+# ============================================================
 
 def send_comment_notification(
     post_title: str,
@@ -34,6 +67,10 @@ Blog Management API
         body=body
     )
 
+
+# ============================================================
+# LIKE NOTIFICATION
+# ============================================================
 
 def send_like_notification(
     post_title: str,

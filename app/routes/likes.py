@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+﻿from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models import Like, Post
-from app.dependencies import get_current_user
-from app.notification_service import send_like_notification
+from app.database.database import get_db
+from app.models.like import Like
+from app.models.post import Post
+from app.core.dependencies import get_current_user
+
+from app.services.notification_service import (
+    send_like_notification,
+    create_notification
+)
 
 
 router = APIRouter(
@@ -97,7 +102,7 @@ def like_post(
     db.refresh(like)
 
     # ========================================================
-    # SEND LIKE NOTIFICATION IN BACKGROUND
+    # SEND LIKE EMAIL NOTIFICATION
     # ========================================================
 
     background_tasks.add_task(
@@ -106,6 +111,20 @@ def like_post(
         liker_name=current_user.username,
         post_owner_email=post.author.email
     )
+
+    # ========================================================
+    # CREATE IN-APP LIKE NOTIFICATION
+    # ========================================================
+
+    # Don't notify the user when they like their own post
+    if post.author_id != current_user.id:
+
+        create_notification(
+            db=db,
+            user_id=post.author_id,
+            message=f"{current_user.username} liked your post '{post.title}'",
+            notification_type="like"
+        )
 
     return {
         "message": "Post liked successfully"

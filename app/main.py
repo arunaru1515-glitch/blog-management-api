@@ -1,14 +1,48 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.database import Base, engine
-from app import models
-from app.routes import auth, posts, comments, likes, subscriptions, dashboard
+from app.database.database import Base, engine
 
+# ============================================================
+# IMPORT ALL MODELS
+# ============================================================
+
+from app.models import (
+    User,
+    Post,
+    Comment,
+    Like,
+    SubscriptionPlan,
+    BillingHistory,
+    Notification
+)
+
+# ============================================================
+# IMPORT ALL ROUTES
+# ============================================================
+
+from app.routes import (
+    auth,
+    posts,
+    comments,
+    likes,
+    subscriptions,
+    dashboard,
+    notifications
+)
+
+
+# ============================================================
+# CREATE DATABASE TABLES
+# ============================================================
 
 Base.metadata.create_all(bind=engine)
 
+
+# ============================================================
+# FASTAPI APPLICATION
+# ============================================================
 
 app = FastAPI(
     title="Blog Management API",
@@ -17,34 +51,80 @@ app = FastAPI(
 )
 
 
-# Serve uploaded images
-app.mount("/media", StaticFiles(directory="media"), name="media")
+# ============================================================
+# SERVE UPLOADED MEDIA FILES
+# ============================================================
+
+app.mount(
+    "/media",
+    StaticFiles(directory="media"),
+    name="media"
+)
 
 
-# Authentication routes
+# ============================================================
+# AUTHENTICATION ROUTES
+# ============================================================
+
 app.include_router(auth.router)
 
-# Post routes
+
+# ============================================================
+# POST ROUTES
+# ============================================================
+
 app.include_router(posts.router)
 
-# Comment routes
+
+# ============================================================
+# COMMENT ROUTES
+# ============================================================
+
 app.include_router(comments.router)
 
-# Like routes
+
+# ============================================================
+# LIKE ROUTES
+# ============================================================
+
 app.include_router(likes.router)
 
-# Subscription routes
+
+# ============================================================
+# SUBSCRIPTION ROUTES
+# ============================================================
+
 app.include_router(subscriptions.router)
 
-# User Dashboard API routes
+
+# ============================================================
+# USER DASHBOARD API ROUTES
+# ============================================================
+
 app.include_router(dashboard.router)
 
 
-# Dashboard frontend page
+# ============================================================
+# NOTIFICATION ROUTES
+# ============================================================
+
+app.include_router(notifications.router)
+
+
+# ============================================================
+# DASHBOARD FRONTEND PAGE
+# ============================================================
+
 @app.get("/dashboard")
 def dashboard_page():
-    return FileResponse("app/templates/dashboard.html")
+    return FileResponse(
+        "app/templates/dashboard.html"
+    )
 
+
+# ============================================================
+# ROOT ENDPOINT
+# ============================================================
 
 @app.get("/")
 def root():

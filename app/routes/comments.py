@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+﻿from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models import Comment, Post
-from app.schemas import CommentCreate, CommentResponse
-from app.dependencies import get_current_user
-from app.notification_service import send_comment_notification
+from app.database.database import get_db
+from app.models.comment import Comment
+from app.models.post import Post
+from app.schemas.schemas import CommentCreate, CommentResponse
+from app.core.dependencies import get_current_user
+
+from app.services.notification_service import (
+    send_comment_notification,
+    create_notification
+)
 
 
 router = APIRouter(
@@ -85,7 +90,7 @@ def add_comment(
     db.refresh(comment)
 
     # ========================================================
-    # SEND COMMENT NOTIFICATION IN BACKGROUND
+    # SEND COMMENT EMAIL NOTIFICATION
     # ========================================================
 
     background_tasks.add_task(
@@ -95,6 +100,20 @@ def add_comment(
         comment_text=comment_data.text,
         post_owner_email=post.author.email
     )
+
+    # ========================================================
+    # CREATE IN-APP COMMENT NOTIFICATION
+    # ========================================================
+
+    # Don't notify the user when they comment on their own post
+    if post.author_id != current_user.id:
+
+        create_notification(
+            db=db,
+            user_id=post.author_id,
+            message=f"{current_user.username} commented on your post '{post.title}'",
+            notification_type="comment"
+        )
 
     return comment
 

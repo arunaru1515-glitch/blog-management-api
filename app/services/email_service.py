@@ -1,4 +1,4 @@
-import os
+﻿import os
 import smtplib
 from datetime import datetime
 from email.message import EmailMessage

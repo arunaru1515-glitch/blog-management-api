@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uuid
@@ -7,9 +7,13 @@ import os
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
-from app.database import get_db
-from app.dependencies import get_current_user
-from app.models import User, SubscriptionPlan, BillingHistory
+from app.database.database import get_db
+from app.core.dependencies import get_current_user
+from app.models.user import User
+from app.models.subscription import SubscriptionPlan
+from app.models.billing_history import BillingHistory
+
+from app.services.notification_service import create_notification
 
 
 router = APIRouter(
@@ -30,7 +34,6 @@ def generate_invoice(
     end_date: datetime,
     transaction_id: str
 ):
-    # Create invoices directory
     invoice_directory = os.path.join(
         "media",
         "invoices"
@@ -41,7 +44,6 @@ def generate_invoice(
         exist_ok=True
     )
 
-    # Invoice file name
     file_name = f"invoice_{transaction_id}.pdf"
 
     file_path = os.path.join(
@@ -49,7 +51,6 @@ def generate_invoice(
         file_name
     )
 
-    # Create PDF
     pdf = canvas.Canvas(
         file_path,
         pagesize=A4
@@ -193,7 +194,6 @@ def generate_invoice(
         "Thank you for subscribing to Blog Management API."
     )
 
-    # Save PDF
     pdf.save()
 
     return file_path
@@ -209,7 +209,6 @@ def get_plans(
 ):
     plans = db.query(SubscriptionPlan).all()
 
-    # Create default plans if they don't exist
     if not plans:
 
         basic = SubscriptionPlan(
@@ -264,7 +263,11 @@ def subscribe_to_plan(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Find requested plan
+
+    # ========================================================
+    # FIND REQUESTED PLAN
+    # ========================================================
+
     plan = db.query(
         SubscriptionPlan
     ).filter(
@@ -288,7 +291,7 @@ def subscribe_to_plan(
     )
 
     # ========================================================
-    # GENERATE SAMPLE TRANSACTION ID
+    # GENERATE TRANSACTION ID
     # ========================================================
 
     transaction_id = (
@@ -333,7 +336,7 @@ def subscribe_to_plan(
     )
 
     # ========================================================
-    # STORE INVOICE PATH IN DATABASE
+    # STORE INVOICE PATH
     # ========================================================
 
     billing.invoice_path = invoice_path
@@ -341,6 +344,20 @@ def subscribe_to_plan(
     db.commit()
 
     db.refresh(billing)
+
+    # ========================================================
+    # CREATE IN-APP SUBSCRIPTION NOTIFICATION
+    # ========================================================
+
+    create_notification(
+        db=db,
+        user_id=current_user.id,
+        message=(
+            f"Your {plan.name} subscription has been "
+            f"activated successfully."
+        ),
+        notification_type="subscription"
+    )
 
     # ========================================================
     # RESPONSE
@@ -366,6 +383,7 @@ def subscribe_to_plan(
 def get_my_subscription(
     current_user: User = Depends(get_current_user)
 ):
+
     if not current_user.subscription_plan:
 
         return {

@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends
+﻿from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.dependencies import get_current_user
-from app.models import User, Post, Comment, Like
+from app.database.database import get_db
+from app.core.dependencies import get_current_user
+
+from app.models.user import User
+from app.models.post import Post
+from app.models.comment import Comment
+from app.models.like import Like
 
 
 router = APIRouter(

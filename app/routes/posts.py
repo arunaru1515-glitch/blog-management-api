@@ -1,4 +1,4 @@
-import os
+﻿import os
 import uuid
 
 from fastapi import (
@@ -12,10 +12,11 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from app.database import get_db
-from app.models import Post, User
-from app.schemas import PostResponse
-from app.dependencies import get_current_user
+from app.database.database import get_db
+from app.models.post import Post
+from app.models.user import User
+from app.schemas.schemas import PostResponse
+from app.core.dependencies import get_current_user
 
 
 router = APIRouter(

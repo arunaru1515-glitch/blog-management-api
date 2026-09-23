@@ -33,6 +33,7 @@
 
         .header {
             margin-bottom: 25px;
+            position: relative;
         }
 
         .small-title {
@@ -57,12 +58,183 @@
         }
 
         /* ================================
+           NOTIFICATION CENTER
+        ================================= */
+
+        .notification-wrapper {
+            position: absolute;
+            top: 5px;
+            right: 0;
+        }
+
+        .notification-bell {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: white;
+            color: #243447;
+            font-size: 23px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+            transition: 0.2s;
+        }
+
+        .notification-bell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            min-width: 20px;
+            height: 20px;
+            padding: 2px 5px;
+            border-radius: 20px;
+            background: #ef6c4d;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f4f7f6;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 58px;
+            right: 0;
+            width: 380px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            display: none;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            font-size: 17px;
+            color: #243447;
+        }
+
+        .mark-all-button {
+            border: none;
+            background: transparent;
+            color: #ef6c4d;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mark-all-button:hover {
+            text-decoration: underline;
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            position: relative;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f2f4;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: #f8fafc;
+        }
+
+        .notification-item.unread {
+            background: #fff5f1;
+            border-left: 4px solid #ef6c4d;
+        }
+
+        .notification-message {
+            margin: 0 28px 7px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #243447;
+        }
+
+        .notification-item.unread .notification-message {
+            font-weight: bold;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #667085;
+        }
+
+        .notification-type {
+            display: inline-block;
+            margin-bottom: 6px;
+            padding: 3px 7px;
+            border-radius: 10px;
+            background: #eef2f7;
+            color: #475467;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .notification-read-button {
+            position: absolute;
+            top: 14px;
+            right: 12px;
+            border: none;
+            background: transparent;
+            color: #667085;
+            cursor: pointer;
+            font-size: 11px;
+            padding: 3px;
+        }
+
+        .notification-read-button:hover {
+            color: #ef6c4d;
+        }
+
+        .empty-notifications {
+            padding: 35px 20px;
+            text-align: center;
+            color: #667085;
+            font-size: 14px;
+        }
+
+        .notification-loading {
+            padding: 25px;
+            text-align: center;
+            color: #667085;
+            font-size: 14px;
+        }
+
+        /* ================================
            TOKEN SECTION
         ================================= */
 
         .token-section {
             background: #13233f;
-            padding: 14px;
+            padding: 7px;
             border-radius: 7px;
             margin-bottom: 25px;
             display: flex;
@@ -82,7 +254,7 @@
             padding: 11px 20px;
             border: none;
             border-radius: 4px;
-            background: #ef6c4d;
+            background: #0054ad;
             color: white;
             font-weight: bold;
             cursor: pointer;
@@ -210,6 +382,19 @@
             .header h1 {
                 font-size: 32px;
             }
+
+            .notification-wrapper {
+                top: 0;
+                right: 0;
+            }
+
+            .notification-dropdown {
+                position: fixed;
+                top: 85px;
+                left: 15px;
+                right: 15px;
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -234,6 +419,67 @@
 
         <div class="welcome" id="welcomeText">
             Enter your JWT token to view your dashboard.
+        </div>
+
+
+        <!-- ================================
+             NOTIFICATION CENTER
+        ================================= -->
+
+        <div class="notification-wrapper">
+
+            <button
+                class="notification-bell"
+                id="notificationBell"
+                onclick="toggleNotifications()"
+                title="Notifications"
+            >
+                🔔
+
+                <span
+                    class="notification-badge"
+                    id="notificationBadge"
+                >
+                    0
+                </span>
+
+            </button>
+
+
+            <div
+                class="notification-dropdown"
+                id="notificationDropdown"
+            >
+
+                <div class="notification-header">
+
+                    <h3>
+                        Notifications
+                    </h3>
+
+                    <button
+                        class="mark-all-button"
+                        onclick="markAllNotificationsAsRead()"
+                    >
+                        Mark all as read
+                    </button>
+
+                </div>
+
+
+                <div
+                    class="notification-list"
+                    id="notificationList"
+                >
+
+                    <div class="notification-loading">
+                        Enter your JWT token to load notifications.
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
@@ -267,8 +513,6 @@
 
     <div class="cards">
 
-        <!-- Posts Created -->
-
         <div class="card">
 
             <h3>
@@ -281,8 +525,6 @@
 
         </div>
 
-
-        <!-- Comments Made -->
 
         <div class="card">
 
@@ -297,8 +539,6 @@
         </div>
 
 
-        <!-- Likes Made -->
-
         <div class="card">
 
             <h3>
@@ -311,8 +551,6 @@
 
         </div>
 
-
-        <!-- Likes Received -->
 
         <div class="card">
 
@@ -352,8 +590,6 @@
 
     <div class="charts">
 
-        <!-- Activity at a glance -->
-
         <div class="chart-card">
 
             <h2>
@@ -368,8 +604,6 @@
 
         </div>
 
-
-        <!-- Activity mix -->
 
         <div class="chart-card">
 
@@ -395,6 +629,22 @@
     let activityChart = null;
     let activityMixChart = null;
 
+    let notifications = [];
+
+
+    // ============================================================
+    // GET JWT TOKEN
+    // ============================================================
+
+    function getToken() {
+
+        return document
+            .getElementById("token")
+            .value
+            .trim();
+
+    }
+
 
     // ============================================================
     // LOAD USER DASHBOARD
@@ -402,21 +652,19 @@
 
     async function loadDashboard() {
 
-        const token =
-            document.getElementById("token").value.trim();
+        const token = getToken();
 
         const message =
             document.getElementById("message");
 
-
-        // Check token
 
         if (!token) {
 
             message.innerText =
                 "Please enter your JWT token.";
 
-            message.style.color = "#dc2626";
+            message.style.color =
+                "#dc2626";
 
             return;
         }
@@ -425,13 +673,14 @@
         message.innerText =
             "Loading dashboard...";
 
-        message.style.color = "#667085";
+        message.style.color =
+            "#667085";
 
 
         try {
 
             // ====================================================
-            // CALL USER DASHBOARD API
+            // DASHBOARD API
             // ====================================================
 
             const response = await fetch(
@@ -446,10 +695,6 @@
                 }
             );
 
-
-            // ====================================================
-            // HANDLE ERROR
-            // ====================================================
 
             if (!response.ok) {
 
@@ -466,16 +711,14 @@
                         errorMessage;
 
                 } catch (e) {
+
                     // Ignore JSON parsing error
+
                 }
 
                 throw new Error(errorMessage);
             }
 
-
-            // ====================================================
-            // GET JSON DATA
-            // ====================================================
 
             const data =
                 await response.json();
@@ -488,7 +731,7 @@
 
 
             // ====================================================
-            // UPDATE USER INFORMATION
+            // USER INFORMATION
             // ====================================================
 
             document.getElementById(
@@ -499,7 +742,7 @@
 
 
             // ====================================================
-            // UPDATE STATISTICS
+            // STATISTICS
             // ====================================================
 
             document.getElementById(
@@ -533,35 +776,11 @@
 
 
             // ====================================================
-            // PREPARE POST DATA
+            // POST DATA
             // ====================================================
 
             const posts =
                 data.posts || [];
-
-
-            const postTitles =
-                posts.map(
-                    post => post.title
-                );
-
-
-            const likesReceived =
-                posts.map(
-                    post => post.likes || 0
-                );
-
-
-            const commentsReceived =
-                posts.map(
-                    post => post.comments || 0
-                );
-
-
-            const postViews =
-                posts.map(
-                    post => post.views || 0
-                );
 
 
             // ====================================================
@@ -739,7 +958,15 @@
                         }
 
                     }
+
                 );
+
+
+            // ====================================================
+            // LOAD NOTIFICATIONS
+            // ====================================================
+
+            await loadNotifications();
 
 
             // ====================================================
@@ -772,7 +999,559 @@
 
     }
 
+
+    // ============================================================
+    // LOAD NOTIFICATIONS
+    // ============================================================
+
+    async function loadNotifications() {
+
+        const token = getToken();
+
+        if (!token) {
+            return;
+        }
+
+
+        const notificationList =
+            document.getElementById(
+                "notificationList"
+            );
+
+
+        notificationList.innerHTML = `
+            <div class="notification-loading">
+                Loading notifications...
+            </div>
+        `;
+
+
+        try {
+
+            const response = await fetch(
+                "/notifications/",
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to load notifications";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {
+
+                    // Ignore JSON parsing error
+
+                }
+
+                throw new Error(errorMessage);
+            }
+
+
+            notifications =
+                await response.json();
+
+
+            console.log(
+                "Notifications:",
+                notifications
+            );
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Notification Error:",
+                error
+            );
+
+            notificationList.innerHTML = `
+                <div class="empty-notifications">
+                    Unable to load notifications.
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    // ============================================================
+    // RENDER NOTIFICATIONS
+    // ============================================================
+
+    function renderNotifications() {
+
+        const notificationList =
+            document.getElementById(
+                "notificationList"
+            );
+
+
+        const notificationBadge =
+            document.getElementById(
+                "notificationBadge"
+            );
+
+
+        // ========================================================
+        // EMPTY STATE
+        // ========================================================
+
+        if (
+            !notifications ||
+            notifications.length === 0
+        ) {
+
+            notificationList.innerHTML = `
+                <div class="empty-notifications">
+                    No notifications yet.
+                </div>
+            `;
+
+            notificationBadge.style.display =
+                "none";
+
+            return;
+        }
+
+
+        // ========================================================
+        // COUNT UNREAD
+        // ========================================================
+
+        const unreadCount =
+            notifications.filter(
+                notification =>
+                    !notification.is_read
+            ).length;
+
+
+        // ========================================================
+        // UPDATE BADGE
+        // ========================================================
+
+        if (unreadCount > 0) {
+
+            notificationBadge.innerText =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount;
+
+            notificationBadge.style.display =
+                "flex";
+
+        } else {
+
+            notificationBadge.style.display =
+                "none";
+
+        }
+
+
+        // ========================================================
+        // RENDER LIST
+        // ========================================================
+
+        notificationList.innerHTML =
+            notifications
+                .map(
+                    notification => {
+
+                        const unreadClass =
+                            notification.is_read
+                                ? ""
+                                : "unread";
+
+
+                        const notificationType =
+                            notification.notification_type ||
+                            "notification";
+
+
+                        const message =
+                            escapeHtml(
+                                notification.message ||
+                                ""
+                            );
+
+
+                        const timestamp =
+                            formatTimestamp(
+                                notification.created_at
+                            );
+
+
+                        return `
+                            <div
+                                class="notification-item ${unreadClass}"
+                                onclick="markNotificationAsRead(${notification.id})"
+                            >
+
+                                <span class="notification-type">
+                                    ${escapeHtml(notificationType)}
+                                </span>
+
+                                <p class="notification-message">
+                                    ${message}
+                                </p>
+
+                                <div class="notification-time">
+                                    ${timestamp}
+                                </div>
+
+                                ${
+                                    !notification.is_read
+                                        ? `
+                                            <button
+                                                class="notification-read-button"
+                                                onclick="event.stopPropagation(); markNotificationAsRead(${notification.id})"
+                                            >
+                                                Mark read
+                                            </button>
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    // ============================================================
+    // MARK INDIVIDUAL NOTIFICATION AS READ
+    // ============================================================
+
+    async function markNotificationAsRead(
+        notificationId
+    ) {
+
+        const token = getToken();
+
+        if (!token) {
+
+            alert(
+                "Please enter your JWT token first."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const response = await fetch(
+                `/notifications/${notificationId}/read`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to mark notification as read";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {
+
+                    // Ignore JSON parsing error
+
+                }
+
+                throw new Error(errorMessage);
+            }
+
+
+            // Update local notification state
+
+            const notification =
+                notifications.find(
+                    item =>
+                        item.id === notificationId
+                );
+
+
+            if (notification) {
+
+                notification.is_read = true;
+
+            }
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Mark Read Error:",
+                error
+            );
+
+            alert(
+                "Error: " + error.message
+            );
+
+        }
+
+    }
+
+
+    // ============================================================
+    // MARK ALL NOTIFICATIONS AS READ
+    // ============================================================
+
+    async function markAllNotificationsAsRead() {
+
+        const token = getToken();
+
+        if (!token) {
+
+            alert(
+                "Please enter your JWT token first."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const response = await fetch(
+                "/notifications/read-all",
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Authorization":
+                            "Bearer " + token
+                    }
+                }
+            );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to mark all notifications as read";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {
+
+                    // Ignore JSON parsing error
+
+                }
+
+                throw new Error(errorMessage);
+            }
+
+
+            // Update local state
+
+            notifications.forEach(
+                notification => {
+                    notification.is_read = true;
+                }
+            );
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Mark All Read Error:",
+                error
+            );
+
+            alert(
+                "Error: " + error.message
+            );
+
+        }
+
+    }
+
+
+    // ============================================================
+    // TOGGLE NOTIFICATION DROPDOWN
+    // ============================================================
+
+    function toggleNotifications() {
+
+        const dropdown =
+            document.getElementById(
+                "notificationDropdown"
+            );
+
+
+        dropdown.classList.toggle(
+            "show"
+        );
+
+
+        // Refresh notifications when opened
+
+        if (
+            dropdown.classList.contains("show") &&
+            getToken()
+        ) {
+
+            loadNotifications();
+
+        }
+
+    }
+
+
+    // ============================================================
+    // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+    // ============================================================
+
+    document.addEventListener(
+        "click",
+        function(event) {
+
+            const wrapper =
+                document.querySelector(
+                    ".notification-wrapper"
+                );
+
+
+            if (
+                wrapper &&
+                !wrapper.contains(event.target)
+            ) {
+
+                document
+                    .getElementById(
+                        "notificationDropdown"
+                    )
+                    .classList.remove("show");
+
+            }
+
+        }
+    );
+
+
+    // ============================================================
+    // FORMAT TIMESTAMP
+    // ============================================================
+
+    function formatTimestamp(
+        timestamp
+    ) {
+
+        if (!timestamp) {
+            return "";
+        }
+
+
+        const date =
+            new Date(timestamp);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return timestamp;
+
+        }
+
+
+        return date.toLocaleString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+    }
+
+
+    // ============================================================
+    // ESCAPE HTML
+    // ============================================================
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+        div.textContent =
+            value;
+
+        return div.innerHTML;
+
+    }
+
 </script>
 
 </body>
+
 </html>
