@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Blog Pulse - User Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, #eef2ff 0%, transparent 35%),
+                radial-gradient(circle at bottom right, #f3e8ff 0%, transparent 35%),
+                #c1cde3;
+            color: #172033;
+        }
+
+        .container {
+            width: min(1250px, calc(100% - 40px));
+            margin: auto;
+            padding: 35px 0 70px;
+        }
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .small-title {
+            color: #1010ca81;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 7px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-family: Georgia, serif;
+            font-size: 44px;
+            line-height: 1.1;
+            color: #172033;
+        }
+
+        .welcome {
+            margin-top: 8px;
+            color: #667085;
+            font-size: 15px;
+        }
+
+        /* =====================================================
+           NOTIFICATION
+        ===================================================== */
+
+        .notification-wrapper {
+            position: relative;
+        }
+
+        .notification-bell {
+            width: 52px;
+            height: 52px;
+            border: 1px solid #e5e7eb;
+            border-radius: 50%;
+            background: white;
+            font-size: 21px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.10);
+            transition: 0.2s ease;
+        }
+
+        .notification-bell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            min-width: 21px;
+            height: 21px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f6f8fc;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 65px;
+            right: 0;
+            width: 380px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+            display: none;
+            overflow: hidden;
+            z-index: 3000;
+            border: 1px solid #e5e7eb;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px;
+            border-bottom: 1px solid #edf0f4;
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .mark-all-button {
+            border: none;
+            background: transparent;
+            color: #4f46e5;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            position: relative;
+            padding: 15px 17px;
+            border-bottom: 1px solid #f0f2f4;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        .notification-item:hover {
+            background: #f8fafc;
+        }
+
+        .notification-item.unread {
+            background: #f5f3ff;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .notification-message {
+            margin: 0 28px 7px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #667085;
+        }
+
+        .notification-type {
+            display: inline-block;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .notification-read-button {
+            position: absolute;
+            top: 14px;
+            right: 12px;
+            border: none;
+            background: transparent;
+            color: #667085;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .empty-notifications,
+        .notification-loading {
+            padding: 30px 20px;
+            text-align: center;
+            color: #667085;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           TOKEN SECTION
+        ===================================================== */
+
+        .token-section {
+            background: linear-gradient(135deg, #172554, #302f51);
+            padding: 5px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 12px 30px rgba(49, 46, 129, 0.20);
+        }
+
+        .token-section input {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+            background: white;
+        }
+
+        .token-section button {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            background: #6366f1;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .token-section button:hover {
+            background: #818cf8;
+            transform: translateY(-1px);
+        }
+
+        #message {
+            margin: 12px 0 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* =====================================================
+           STATISTICS
+        ===================================================== */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 23px;
+            border-radius: 18px;
+            min-height: 135px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
+            border: 1px solid #edf0f5;
+            transition: 0.2s ease;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            background: #eef2ff;
+            right: -25px;
+            top: -25px;
+            opacity: 0.8;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(15, 23, 42, 0.10);
+        }
+
+        .card h3 {
+            position: relative;
+            z-index: 1;
+            margin: 0 0 14px;
+            font-size: 11px;
+            color: #667085;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card p {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            font-size: 34px;
+            font-weight: 800;
+            color: #172033;
+        }
+
+        .views-card {
+            width: calc(25% - 13px);
+            margin-bottom: 20px;
+        }
+
+        /* =====================================================
+           CHARTS
+        ===================================================== */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 18px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.94);
+            padding: 24px;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
+            border: 1px solid #edf0f5;
+        }
+
+        .chart-card h2 {
+            margin: 0 0 20px;
+            font-size: 18px;
+            color: #172033;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 310px;
+        }
+
+        .donut-wrapper {
+            position: relative;
+            height: 310px;
+        }
+
+        /* =====================================================
+           AI CHAT BUTTON
+        ===================================================== */
+
+        .ai-chat-button {
+            position: fixed;
+            right: 28px;
+            bottom: 28px;
+            width: 62px;
+            height: 62px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            font-size: 25px;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
+            z-index: 4000;
+            transition: 0.2s ease;
+        }
+
+        .ai-chat-button:hover {
+            transform: scale(1.08);
+        }
+
+        .ai-chat-label {
+            position: fixed;
+            right: 100px;
+            bottom: 45px;
+            background: #172033;
+            color: white;
+            padding: 8px 13px;
+            border-radius: 8px;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s;
+            z-index: 4000;
+        }
+
+        .ai-chat-button:hover + .ai-chat-label {
+            opacity: 1;
+        }
+
+        /* =====================================================
+           AI CHAT WINDOW
+        ===================================================== */
+
+        .ai-chat-window {
+            position: fixed;
+            right: 28px;
+            bottom: 105px;
+            width: 390px;
+            height: 550px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.28);
+            overflow: hidden;
+            display: none;
+            z-index: 3999;
+            border: 1px solid #e5e7eb;
+            flex-direction: column;
+        }
+
+        .ai-chat-window.show {
+            display: flex;
+        }
+
+        .ai-chat-header {
+            min-height: 68px;
+            background: linear-gradient(135deg, #312e81, #4f46e5);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 18px;
+        }
+
+        .ai-chat-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-chat-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-chat-title strong {
+            display: block;
+            font-size: 14px;
+        }
+
+        .ai-chat-title span {
+            display: block;
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        .ai-close {
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 23px;
+            cursor: pointer;
+        }
+
+        /* =====================================================
+           AI CHAT BODY
+        ===================================================== */
+
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px;
+            background: #f8fafc;
+        }
+
+        .message-row {
+            display: flex;
+            margin-bottom: 14px;
+        }
+
+        .user-row {
+            justify-content: flex-end;
+        }
+
+        .bot-row {
+            justify-content: flex-start;
+            gap: 8px;
+        }
+
+        .message-avatar {
+            width: 29px;
+            height: 29px;
+            min-width: 29px;
+            border-radius: 50%;
+            background: #eef2ff;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .message {
+            max-width: 78%;
+            padding: 11px 13px;
+            border-radius: 13px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #28527a;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message {
+            background: white;
+            color: #334155;
+            border: 1px solid #e6eaf0;
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* =====================================================
+           AI CHAT INPUT
+        ===================================================== */
+
+        .ai-chat-input-area {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .ai-chat-input {
+            flex: 1;
+            padding: 11px 13px;
+            border: 1px solid #d9dee8;
+            border-radius: 10px;
+            outline: none;
+            font-size: 13px;
+        }
+
+        .ai-chat-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
+        }
+
+        .ai-send-button {
+            width: 44px;
+            border: none;
+            border-radius: 10px;
+            background: #28527a;
+            color: white;
+            font-size: 19px;
+            cursor: pointer;
+        }
+
+        .ai-send-button:hover {
+            background: #1e4264;
+        }
+
+        .ai-send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .ai-hint {
+            text-align: center;
+            font-size: 9px;
+            color: #98a2b3;
+            padding-bottom: 7px;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 950px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .views-card {
+                width: 100%;
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: calc(100% - 24px);
+                padding-top: 20px;
+            }
+
+            .header h1 {
+                font-size: 34px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .token-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .notification-dropdown {
+                position: fixed;
+                top: 80px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
+
+            .ai-chat-window {
+                right: 12px;
+                left: 12px;
+                bottom: 90px;
+                width: auto;
+                height: 510px;
+            }
+
+            .ai-chat-button {
+                right: 18px;
+                bottom: 18px;
+            }
+
+            .ai-chat-label {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- =====================================================
+         HEADER
+    ===================================================== -->
+
+    <div class="header">
+
+        <div>
+            <div class="small-title">
+                Personal Analytics
+            </div>
+
+            <h1>
+                My Dashboard
+            </h1>
+
+            <div class="welcome" id="welcomeText">
+                Enter your JWT token to view your dashboard.
+            </div>
+        </div>
+
+        <!-- NOTIFICATION -->
+
+        <div class="notification-wrapper">
+
+            <button
+                class="notification-bell"
+                id="notificationBell"
+                onclick="toggleNotifications()"
+                title="Notifications"
+            >
+                🔔
+
+                <span
+                    class="notification-badge"
+                    id="notificationBadge"
+                >
+                    0
+                </span>
+            </button>
+
+            <div
+                class="notification-dropdown"
+                id="notificationDropdown"
+            >
+
+                <div class="notification-header">
+
+                    <h3>
+                        Notifications
+                    </h3>
+
+                    <button
+                        class="mark-all-button"
+                        onclick="markAllNotificationsAsRead()"
+                    >
+                        Mark all as read
+                    </button>
+
+                </div>
+
+                <div
+                    class="notification-list"
+                    id="notificationList"
+                >
+                    <div class="notification-loading">
+                        Enter your JWT token to load notifications.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         JWT TOKEN
+    ===================================================== -->
+
+    <div class="token-section">
+
+        <input
+            type="password"
+            id="token"
+            placeholder="Paste JWT token here"
+        >
+
+        <button onclick="loadDashboard()">
+            View Dashboard
+        </button>
+
+    </div>
+
+    <div id="message"></div>
+
+
+    <!-- =====================================================
+         STATISTICS
+    ===================================================== -->
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Posts Created</h3>
+            <p id="totalPosts">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Comments Made</h3>
+            <p id="totalComments">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Likes Made</h3>
+            <p id="totalLikesMade">0</p>
+        </div>
+
+        <div class="card">
+            <h3>Likes Received</h3>
+            <p id="totalLikesReceived">0</p>
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         VIEWS
+    ===================================================== -->
+
+    <div class="card views-card">
+
+        <h3>
+            Post Views
+        </h3>
+
+        <p id="totalViews">
+            0
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         CHARTS
+    ===================================================== -->
+
+    <div class="charts">
+
+        <div class="chart-card">
+
+            <h2>
+                Activity at a glance
+            </h2>
+
+            <div class="chart-wrapper">
+
+                <canvas id="activityChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <div class="chart-card">
+
+            <h2>
+                Activity mix
+            </h2>
+
+            <div class="donut-wrapper">
+
+                <canvas id="activityMixChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     AI SUPPORT FLOATING BUTTON
+========================================================= -->
+
+<button
+    class="ai-chat-button"
+    onclick="toggleAIChat()"
+    title="AI Support"
+>
+    💬
+</button>
+
+<div class="ai-chat-label">
+    AI Support
+</div>
+
+
+<!-- =========================================================
+     AI SUPPORT CHAT
+========================================================= -->
+
+<div
+    class="ai-chat-window"
+    id="aiChatWindow"
+>
+
+    <!-- HEADER -->
+
+    <div class="ai-chat-header">
+
+        <div class="ai-chat-title">
+
+            <div class="ai-chat-icon">
+                🤖
+            </div>
+
+            <div>
+
+                <strong>
+                    AI Support
+                </strong>
+
+                <span>
+                    Blog Management Support
+                </span>
+
+            </div>
+
+        </div>
+
+        <button
+            class="ai-close"
+            onclick="toggleAIChat()"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <!-- MESSAGES -->
+
+    <div
+        class="ai-chat-messages"
+        id="chatMessages"
+    >
+
+        <div class="message-row bot-row">
+
+            <div class="message-avatar">
+                ✦
+            </div>
+
+            <div class="message bot-message">
+                Hello! 👋 I'm your Blog Management Assistant.
+                I can help you with posts, comments, likes,
+                subscriptions, billing, profiles, notifications
+                and dashboard analytics.
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INPUT -->
+
+    <div class="ai-chat-input-area">
+
+        <input
+            type="text"
+            class="ai-chat-input"
+            id="questionInput"
+            placeholder="Ask something about your blog..."
+        >
+
+        <button
+            class="ai-send-button"
+            id="sendButton"
+            onclick="sendAIMessage()"
+        >
+            ➤
+        </button>
+
+    </div>
+
+    <div class="ai-hint">
+        Press Enter to send
+    </div>
+
+</div>
+
+
+<script>
+
+    let activityChart = null;
+    let activityMixChart = null;
+
+    let notifications = [];
+
+
+    /* =========================================================
+       AI CHAT
+    ========================================================= */
+
+    function toggleAIChat() {
+
+        const chatWindow =
+            document.getElementById("aiChatWindow");
+
+        chatWindow.classList.toggle("show");
+
+    }
+
+
+    /* =========================================================
+       GET TOKEN
+    ========================================================= */
+
+    function getToken() {
+
+        return document
+            .getElementById("token")
+            .value
+            .trim();
+
+    }
+
+
+    /* =========================================================
+       AI SEND MESSAGE
+    ========================================================= */
+
+    async function sendAIMessage() {
+
+        const questionInput =
+            document.getElementById("questionInput");
+
+        const sendButton =
+            document.getElementById("sendButton");
+
+        const chatMessages =
+            document.getElementById("chatMessages");
+
+        const message =
+            questionInput.value.trim();
+
+
+        if (!message) {
+            return;
+        }
+
+
+        /* USER MESSAGE */
+
+        addUserMessage(message);
+
+        questionInput.value = "";
+
+        sendButton.disabled = true;
+
+
+        /* THINKING */
+
+        const thinkingMessage =
+            addBotMessage("Thinking...");
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/ai-support/",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            message: message
+                        })
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Unable to process your request.";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    if (errorData.detail) {
+
+                        errorMessage =
+                            Array.isArray(errorData.detail)
+                                ? errorData.detail
+                                    .map(item => item.msg)
+                                    .join(", ")
+                                : errorData.detail;
+                    }
+
+                } catch (error) {
+
+                    console.error(error);
+
+                }
+
+                throw new Error(errorMessage);
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                "AI Support Response:",
+                data
+            );
+
+
+            /* REMOVE THINKING */
+
+            if (thinkingMessage) {
+
+                thinkingMessage.remove();
+
+            }
+
+
+            /* BOT RESPONSE */
+
+            addBotMessage(
+                data.ai_response ||
+                "I couldn't generate a response."
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "AI Support Error:",
+                error
+            );
+
+
+            if (thinkingMessage) {
+
+                thinkingMessage.remove();
+
+            }
+
+
+            addBotMessage(
+                "Sorry, I couldn't process your request right now. Please try again."
+            );
+
+        }
+
+
+        sendButton.disabled = false;
+
+        scrollChatToBottom();
+
+    }
+
+
+    /* =========================================================
+       ADD USER MESSAGE
+    ========================================================= */
+
+    function addUserMessage(message) {
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "message-row user-row";
+
+
+        const bubble =
+            document.createElement("div");
+
+        bubble.className =
+            "message user-message";
+
+        bubble.textContent =
+            message;
+
+
+        row.appendChild(bubble);
+
+        document
+            .getElementById("chatMessages")
+            .appendChild(row);
+
+
+        scrollChatToBottom();
+
+    }
+
+
+    /* =========================================================
+       ADD BOT MESSAGE
+    ========================================================= */
+
+    function addBotMessage(message) {
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "message-row bot-row";
+
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "message-avatar";
+
+        avatar.textContent =
+            "✦";
+
+
+        const bubble =
+            document.createElement("div");
+
+        bubble.className =
+            "message bot-message";
+
+        bubble.textContent =
+            message;
+
+
+        row.appendChild(avatar);
+
+        row.appendChild(bubble);
+
+
+        document
+            .getElementById("chatMessages")
+            .appendChild(row);
+
+
+        scrollChatToBottom();
+
+
+        return row;
+
+    }
+
+
+    /* =========================================================
+       SCROLL AI CHAT
+    ========================================================= */
+
+    function scrollChatToBottom() {
+
+        const chatMessages =
+            document.getElementById(
+                "chatMessages"
+            );
+
+        if (!chatMessages) {
+            return;
+        }
+
+        chatMessages.scrollTop =
+            chatMessages.scrollHeight;
+
+    }
+
+
+    /* =========================================================
+       ENTER KEY
+    ========================================================= */
+
+    document
+        .getElementById("questionInput")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    sendAIMessage();
+
+                }
+
+            }
+        );
+
+
+    /* =========================================================
+       LOAD DASHBOARD
+    ========================================================= */
+
+    async function loadDashboard() {
+
+        const token =
+            getToken();
+
+        const message =
+            document.getElementById(
+                "message"
+            );
+
+
+        if (!token) {
+
+            message.innerText =
+                "Please enter your JWT token.";
+
+            message.style.color =
+                "#dc2626";
+
+            return;
+
+        }
+
+
+        /* SAVE TOKEN */
+
+        sessionStorage.setItem(
+            "jwt_token",
+            token
+        );
+
+
+        message.innerText =
+            "Loading dashboard...";
+
+        message.style.color =
+            "#667085";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/user/dashboard",
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to load dashboard";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {}
+
+                throw new Error(
+                    errorMessage
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            console.log(
+                "Dashboard Data:",
+                data
+            );
+
+
+            /* USER */
+
+            document.getElementById(
+                "welcomeText"
+            ).innerText =
+                "Welcome back, " +
+                data.username;
+
+
+            /* STATISTICS */
+
+            document.getElementById(
+                "totalPosts"
+            ).innerText =
+                data.total_posts || 0;
+
+
+            document.getElementById(
+                "totalComments"
+            ).innerText =
+                data.total_comments || 0;
+
+
+            document.getElementById(
+                "totalLikesMade"
+            ).innerText =
+                data.total_likes_made || 0;
+
+
+            document.getElementById(
+                "totalLikesReceived"
+            ).innerText =
+                data.total_likes_received || 0;
+
+
+            document.getElementById(
+                "totalViews"
+            ).innerText =
+                data.total_views || 0;
+
+
+            /* =================================================
+               BAR CHART
+            ================================================= */
+
+            if (activityChart) {
+
+                activityChart.destroy();
+
+            }
+
+
+            const activityContext =
+                document
+                    .getElementById(
+                        "activityChart"
+                    )
+                    .getContext("2d");
+
+
+            activityChart =
+                new Chart(
+                    activityContext,
+                    {
+
+                        type: "bar",
+
+                        data: {
+
+                            labels: [
+                                "Posts",
+                                "Comments",
+                                "Likes Made",
+                                "Likes Received"
+                            ],
+
+                            datasets: [
+                                {
+                                    label: "Activity",
+
+                                    data: [
+                                        data.total_posts || 0,
+                                        data.total_comments || 0,
+                                        data.total_likes_made || 0,
+                                        data.total_likes_received || 0
+                                    ],
+
+                                    borderWidth: 1,
+
+                                    borderRadius: 8,
+
+                                    backgroundColor: [
+                                        "#6366f1",
+                                        "#8b5cf6",
+                                        "#ec4899",
+                                        "#f59e0b"
+                                    ]
+                                }
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero: true,
+
+                                    ticks: {
+                                        precision: 0
+                                    }
+
+                                }
+
+                            },
+
+                            plugins: {
+
+                                legend: {
+                                    display: false
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+            /* =================================================
+               DONUT CHART
+            ================================================= */
+
+            if (activityMixChart) {
+
+                activityMixChart.destroy();
+
+            }
+
+
+            const mixContext =
+                document
+                    .getElementById(
+                        "activityMixChart"
+                    )
+                    .getContext("2d");
+
+
+            activityMixChart =
+                new Chart(
+                    mixContext,
+                    {
+
+                        type: "doughnut",
+
+                        data: {
+
+                            labels: [
+                                "Posts",
+                                "Comments",
+                                "Likes Made",
+                                "Likes Received"
+                            ],
+
+                            datasets: [
+                                {
+
+                                    data: [
+                                        data.total_posts || 0,
+                                        data.total_comments || 0,
+                                        data.total_likes_made || 0,
+                                        data.total_likes_received || 0
+                                    ],
+
+                                    backgroundColor: [
+                                        "#6366f1",
+                                        "#8b5cf6",
+                                        "#ec4899",
+                                        "#f59e0b"
+                                    ],
+
+                                    borderWidth: 2
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            cutout: "62%",
+
+                            plugins: {
+
+                                legend: {
+
+                                    position: "bottom"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+            /* NOTIFICATIONS */
+
+            await loadNotifications();
+
+
+            message.innerText =
+                "Dashboard loaded successfully.";
+
+            message.style.color =
+                "#15803d";
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Dashboard Error:",
+                error
+            );
+
+
+            message.innerText =
+                "Error: " +
+                error.message;
+
+            message.style.color =
+                "#dc2626";
+
+        }
+
+    }
+
+
+    /* =========================================================
+       LOAD NOTIFICATIONS
+    ========================================================= */
+
+    async function loadNotifications() {
+
+        const token =
+            getToken();
+
+        if (!token) {
+            return;
+        }
+
+
+        const notificationList =
+            document.getElementById(
+                "notificationList"
+            );
+
+
+        notificationList.innerHTML = `
+            <div class="notification-loading">
+                Loading notifications...
+            </div>
+        `;
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/notifications/",
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to load notifications";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {}
+
+                throw new Error(
+                    errorMessage
+                );
+
+            }
+
+
+            notifications =
+                await response.json();
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Notification Error:",
+                error
+            );
+
+
+            notificationList.innerHTML = `
+                <div class="empty-notifications">
+                    Unable to load notifications.
+                </div>
+            `;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       RENDER NOTIFICATIONS
+    ========================================================= */
+
+    function renderNotifications() {
+
+        const notificationList =
+            document.getElementById(
+                "notificationList"
+            );
+
+
+        const notificationBadge =
+            document.getElementById(
+                "notificationBadge"
+            );
+
+
+        if (
+            !notifications ||
+            notifications.length === 0
+        ) {
+
+            notificationList.innerHTML = `
+                <div class="empty-notifications">
+                    No notifications yet.
+                </div>
+            `;
+
+            notificationBadge.style.display =
+                "none";
+
+            return;
+
+        }
+
+
+        const unreadCount =
+            notifications.filter(
+                notification =>
+                    !notification.is_read
+            ).length;
+
+
+        if (unreadCount > 0) {
+
+            notificationBadge.innerText =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount;
+
+            notificationBadge.style.display =
+                "flex";
+
+        } else {
+
+            notificationBadge.style.display =
+                "none";
+
+        }
+
+
+        notificationList.innerHTML =
+            notifications
+                .map(
+                    notification => {
+
+                        const unreadClass =
+                            notification.is_read
+                                ? ""
+                                : "unread";
+
+
+                        const notificationType =
+                            notification.notification_type ||
+                            "notification";
+
+
+                        const message =
+                            escapeHtml(
+                                notification.message ||
+                                ""
+                            );
+
+
+                        const timestamp =
+                            formatTimestamp(
+                                notification.created_at
+                            );
+
+
+                        return `
+                            <div
+                                class="notification-item ${unreadClass}"
+                                onclick="markNotificationAsRead(${notification.id})"
+                            >
+
+                                <span class="notification-type">
+                                    ${escapeHtml(notificationType)}
+                                </span>
+
+                                <p class="notification-message">
+                                    ${message}
+                                </p>
+
+                                <div class="notification-time">
+                                    ${timestamp}
+                                </div>
+
+                                ${
+                                    !notification.is_read
+                                        ? `
+                                            <button
+                                                class="notification-read-button"
+                                                onclick="event.stopPropagation(); markNotificationAsRead(${notification.id})"
+                                            >
+                                                Mark read
+                                            </button>
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    /* =========================================================
+       MARK NOTIFICATION READ
+    ========================================================= */
+
+    async function markNotificationAsRead(
+        notificationId
+    ) {
+
+        const token =
+            getToken();
+
+
+        if (!token) {
+
+            alert(
+                "Please enter your JWT token first."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/notifications/${notificationId}/read`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to mark notification as read";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {}
+
+                throw new Error(
+                    errorMessage
+                );
+
+            }
+
+
+            const notification =
+                notifications.find(
+                    item =>
+                        item.id === notificationId
+                );
+
+
+            if (notification) {
+
+                notification.is_read =
+                    true;
+
+            }
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Mark Read Error:",
+                error
+            );
+
+            alert(
+                "Error: " +
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       MARK ALL READ
+    ========================================================= */
+
+    async function markAllNotificationsAsRead() {
+
+        const token =
+            getToken();
+
+
+        if (!token) {
+
+            alert(
+                "Please enter your JWT token first."
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/notifications/read-all",
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Authorization":
+                                "Bearer " + token
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let errorMessage =
+                    "Failed to mark all notifications as read";
+
+                try {
+
+                    const errorData =
+                        await response.json();
+
+                    errorMessage =
+                        errorData.detail ||
+                        errorMessage;
+
+                } catch (e) {}
+
+                throw new Error(
+                    errorMessage
+                );
+
+            }
+
+
+            notifications.forEach(
+                notification => {
+                    notification.is_read =
+                        true;
+                }
+            );
+
+
+            renderNotifications();
+
+        }
+
+
+        catch (error) {
+
+            console.error(
+                "Mark All Read Error:",
+                error
+            );
+
+            alert(
+                "Error: " +
+                error.message
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       TOGGLE NOTIFICATIONS
+    ========================================================= */
+
+    function toggleNotifications() {
+
+        const dropdown =
+            document.getElementById(
+                "notificationDropdown"
+            );
+
+
+        dropdown.classList.toggle(
+            "show"
+        );
+
+
+        if (
+            dropdown.classList.contains("show") &&
+            getToken()
+        ) {
+
+            loadNotifications();
+
+        }
+
+    }
+
+
+    /* =========================================================
+       CLOSE NOTIFICATION
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function(event) {
+
+            const wrapper =
+                document.querySelector(
+                    ".notification-wrapper"
+                );
+
+
+            if (
+                wrapper &&
+                !wrapper.contains(event.target)
+            ) {
+
+                document
+                    .getElementById(
+                        "notificationDropdown"
+                    )
+                    .classList.remove("show");
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       FORMAT TIMESTAMP
+    ========================================================= */
+
+    function formatTimestamp(timestamp) {
+
+        if (!timestamp) {
+            return "";
+        }
+
+
+        const date =
+            new Date(timestamp);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return timestamp;
+
+        }
+
+
+        return date.toLocaleString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+    }
+
+
+    /* =========================================================
+       ESCAPE HTML
+    ========================================================= */
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            value;
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* =========================================================
+       RESTORE TOKEN
+    ========================================================= */
+
+    window.addEventListener(
+        "load",
+        function() {
+
+            const savedToken =
+                sessionStorage.getItem(
+                    "jwt_token"
+                );
+
+
+            if (savedToken) {
+
+                document.getElementById(
+                    "token"
+                ).value =
+                    savedToken;
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+
+</html>

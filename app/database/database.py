@@ -1,9 +1,15 @@
-﻿from sqlalchemy import create_engine
+﻿from pathlib import Path
+
+from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
+# Project root directory
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 # SQLite database
-DATABASE_URL = r"sqlite:///C:\Users\HP\Desktop\Backend Accessment\Blog Management API using FastAPI\blog_management_api\blog.db"
+DATABASE_PATH = BASE_DIR / "blog.db"
+DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
 
 
 # Create database engine
@@ -28,7 +34,6 @@ Base = declarative_base()
 # Database dependency
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:

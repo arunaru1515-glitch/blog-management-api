@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 
 from app.database.database import Base, engine
 
+
 # ============================================================
 # IMPORT ALL MODELS
 # ============================================================
@@ -15,8 +16,10 @@ from app.models import (
     Like,
     SubscriptionPlan,
     BillingHistory,
-    Notification
+    Notification,
+    AISupportActivity
 )
+
 
 # ============================================================
 # IMPORT ALL ROUTES
@@ -29,7 +32,8 @@ from app.routes import (
     likes,
     subscriptions,
     dashboard,
-    notifications
+    notifications,
+    ai_support
 )
 
 
@@ -59,6 +63,17 @@ app.mount(
     "/media",
     StaticFiles(directory="media"),
     name="media"
+)
+
+
+# ============================================================
+# SERVE FRONTEND STATIC FILES
+# ============================================================
+
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
 )
 
 
@@ -112,13 +127,31 @@ app.include_router(notifications.router)
 
 
 # ============================================================
+# AI SUPPORT ROUTES
+# ============================================================
+
+app.include_router(ai_support.router)
+
+
+# ============================================================
 # DASHBOARD FRONTEND PAGE
 # ============================================================
 
 @app.get("/dashboard")
 def dashboard_page():
     return FileResponse(
-        "app/templates/dashboard.html"
+        "static/dashboard.html"
+    )
+
+
+# ============================================================
+# AI SUPPORT FRONTEND PAGE
+# ============================================================
+
+@app.get("/ai-support")
+def ai_support_page():
+    return FileResponse(
+        "static/ai_support/ai_support.html"
     )
 
 

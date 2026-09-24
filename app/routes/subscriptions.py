@@ -2,10 +2,6 @@
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uuid
-import os
-
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 
 from app.database.database import get_db
 from app.core.dependencies import get_current_user
@@ -14,189 +10,13 @@ from app.models.subscription import SubscriptionPlan
 from app.models.billing_history import BillingHistory
 
 from app.services.notification_service import create_notification
+from app.services.invoice_service import generate_invoice
 
 
 router = APIRouter(
     prefix="/subscriptions",
     tags=["Subscriptions"]
 )
-
-
-# ============================================================
-# INVOICE GENERATION
-# ============================================================
-
-def generate_invoice(
-    username: str,
-    plan_name: str,
-    price: float,
-    start_date: datetime,
-    end_date: datetime,
-    transaction_id: str
-):
-    invoice_directory = os.path.join(
-        "media",
-        "invoices"
-    )
-
-    os.makedirs(
-        invoice_directory,
-        exist_ok=True
-    )
-
-    file_name = f"invoice_{transaction_id}.pdf"
-
-    file_path = os.path.join(
-        invoice_directory,
-        file_name
-    )
-
-    pdf = canvas.Canvas(
-        file_path,
-        pagesize=A4
-    )
-
-    width, height = A4
-
-    # ========================================================
-    # INVOICE HEADER
-    # ========================================================
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        20
-    )
-
-    pdf.drawString(
-        50,
-        height - 70,
-        "BLOG MANAGEMENT API"
-    )
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        16
-    )
-
-    pdf.drawString(
-        50,
-        height - 110,
-        "SUBSCRIPTION INVOICE"
-    )
-
-    # ========================================================
-    # INVOICE DETAILS
-    # ========================================================
-
-    pdf.setFont(
-        "Helvetica",
-        11
-    )
-
-    y = height - 160
-
-    pdf.drawString(
-        50,
-        y,
-        f"User Name: {username}"
-    )
-
-    y -= 30
-
-    pdf.drawString(
-        50,
-        y,
-        f"Plan Name: {plan_name}"
-    )
-
-    y -= 30
-
-    pdf.drawString(
-        50,
-        y,
-        f"Price: Rs. {price:.2f}"
-    )
-
-    y -= 30
-
-    pdf.drawString(
-        50,
-        y,
-        f"Start Date: {start_date.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-
-    y -= 30
-
-    pdf.drawString(
-        50,
-        y,
-        f"End Date: {end_date.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-
-    y -= 30
-
-    pdf.drawString(
-        50,
-        y,
-        f"Transaction ID: {transaction_id}"
-    )
-
-    # ========================================================
-    # PAYMENT STATUS
-    # ========================================================
-
-    y -= 60
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        12
-    )
-
-    pdf.drawString(
-        50,
-        y,
-        "Payment Status: SUCCESS"
-    )
-
-    y -= 40
-
-    pdf.setFont(
-        "Helvetica",
-        10
-    )
-
-    pdf.drawString(
-        50,
-        y,
-        "This is a sample invoice generated for the"
-    )
-
-    y -= 18
-
-    pdf.drawString(
-        50,
-        y,
-        "Blog Management API subscription."
-    )
-
-    # ========================================================
-    # FOOTER
-    # ========================================================
-
-    pdf.setFont(
-        "Helvetica",
-        9
-    )
-
-    pdf.drawString(
-        50,
-        50,
-        "Thank you for subscribing to Blog Management API."
-    )
-
-    pdf.save()
-
-    return file_path
 
 
 # ============================================================
@@ -328,6 +148,7 @@ def subscribe_to_plan(
 
     invoice_path = generate_invoice(
         username=current_user.username,
+        email=current_user.email,
         plan_name=plan.name,
         price=plan.price,
         start_date=start_date,
@@ -339,7 +160,7 @@ def subscribe_to_plan(
     # STORE INVOICE PATH
     # ========================================================
 
-    billing.invoice_path = invoice_path
+    billing.invoice_path = str(invoice_path)
 
     db.commit()
 
@@ -371,7 +192,7 @@ def subscribe_to_plan(
         "start_date": start_date,
         "end_date": end_date,
         "transaction_id": transaction_id,
-        "invoice_path": invoice_path
+        "invoice_path": str(invoice_path)
     }
 
 

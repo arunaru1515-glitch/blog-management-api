@@ -71,3 +71,10 @@ class User(Base):
         "Notification",
         back_populates="user"
     )
+
+    # AI Support activity history
+    ai_support_activities = relationship(
+        "AISupportActivity",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
