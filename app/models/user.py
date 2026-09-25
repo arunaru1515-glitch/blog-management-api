@@ -39,6 +39,13 @@ class User(Base):
         default="local"
     )
 
+    # Auth0 user identifier for social-login users
+    auth0_id = Column(
+        String,
+        nullable=True,
+        unique=True
+    )
+
     # Posts created by the user
     posts = relationship(
         "Post",

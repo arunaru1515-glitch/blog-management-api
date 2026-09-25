@@ -659,6 +659,7 @@
             display: flex;
 
             align-items: center;
+
             justify-content: center;
         }
 
@@ -934,9 +935,7 @@
 
 <body>
 
-
 <div class="container">
-
 
     <!-- =====================================================
          HEADER
@@ -1297,11 +1296,20 @@
 
     /* =========================================================
        TOKEN MANAGEMENT
+       
+       IMPORTANT:
+       Login stores the JWT in localStorage using:
+       
+       localStorage.setItem("access_token", token)
+       
+       Therefore dashboard must use the same storage.
     ========================================================= */
 
     function getToken() {
 
-        return sessionStorage.getItem("jwt_token");
+        return localStorage.getItem(
+            "access_token"
+        );
 
     }
 
@@ -1312,8 +1320,8 @@
             return;
         }
 
-        sessionStorage.setItem(
-            "jwt_token",
+        localStorage.setItem(
+            "access_token",
             token
         );
 
@@ -1322,8 +1330,8 @@
 
     function clearToken() {
 
-        sessionStorage.removeItem(
-            "jwt_token"
+        localStorage.removeItem(
+            "access_token"
         );
 
     }
@@ -1397,7 +1405,7 @@
         /*
          * First use provided token.
          *
-         * Otherwise use sessionStorage token.
+         * Otherwise use localStorage token.
          */
 
         let token =
@@ -1449,7 +1457,7 @@
 
 
         /*
-         * Save token for the current browser session.
+         * Save token for the browser.
          */
 
         saveToken(token);
@@ -1497,12 +1505,9 @@
                         method: "GET",
 
                         headers: {
-
                             "Authorization":
                                 "Bearer " + token
-
                         }
-
                     }
                 );
 
@@ -1651,15 +1656,10 @@
                         data: {
 
                             labels: [
-
                                 "Posts",
-
                                 "Comments",
-
                                 "Likes Made",
-
                                 "Likes Received"
-
                             ],
 
                             datasets: [
@@ -1686,15 +1686,10 @@
                                     borderRadius: 8,
 
                                     backgroundColor: [
-
                                         "#6366f1",
-
                                         "#8b5cf6",
-
                                         "#ec4899",
-
                                         "#f59e0b"
-
                                     ]
 
                                 }
@@ -1770,15 +1765,10 @@
                         data: {
 
                             labels: [
-
                                 "Posts",
-
                                 "Comments",
-
                                 "Likes Made",
-
                                 "Likes Received"
-
                             ],
 
                             datasets: [
@@ -1798,15 +1788,10 @@
                                     ],
 
                                     backgroundColor: [
-
                                         "#6366f1",
-
                                         "#8b5cf6",
-
                                         "#ec4899",
-
                                         "#f59e0b"
-
                                     ],
 
                                     borderWidth: 2
@@ -1910,7 +1895,9 @@
         notificationList.innerHTML = `
 
             <div class="notification-loading">
+
                 Loading notifications...
+
             </div>
 
         `;
@@ -2010,8 +1997,10 @@
 
             `;
 
+
             notificationBadge.style.display =
                 "none";
+
 
             return;
 
@@ -2031,6 +2020,7 @@
                 unreadCount > 99
                     ? "99+"
                     : unreadCount;
+
 
             notificationBadge.style.display =
                 "flex";
@@ -2115,7 +2105,9 @@
                                                     markNotificationAsRead(${notification.id})
                                                 "
                                             >
+
                                                 Mark read
+
                                             </button>
 
                                         `
@@ -2146,9 +2138,7 @@
 
 
         if (!token) {
-
             return;
-
         }
 
 
@@ -2570,11 +2560,8 @@
 
 
             addBotMessage(
-
                 data.ai_response ||
-
                 "I couldn't generate a response."
-
             );
 
         }

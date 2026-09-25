@@ -199,7 +199,6 @@ def register(
 
     # --------------------------------------------------------
     # CREATE USER
-    # IMPORTANT: User model uses "password"
     # --------------------------------------------------------
 
     new_user = models.User(
@@ -210,7 +209,9 @@ def register(
             user_in.password
         ),
 
-        plan_id=(
+        provider="local",
+
+        subscription_plan_id=(
             basic_plan.id
             if basic_plan
             else None
@@ -279,10 +280,9 @@ def login(
 
     # --------------------------------------------------------
     # VERIFY PASSWORD
-    # IMPORTANT: User model uses "password"
     # --------------------------------------------------------
 
-    if not verify_password(
+    if not user.password or not verify_password(
         form_data.password,
         user.password
     ):
@@ -371,6 +371,7 @@ async def auth0_callback(
 ):
 
     check_auth0_config()
+
 
     # --------------------------------------------------------
     # GET AUTH0 TOKEN
@@ -549,7 +550,6 @@ async def auth0_callback(
 
         # ----------------------------------------------------
         # CREATE AUTH0 USER
-        # IMPORTANT: User model uses "password"
         # ----------------------------------------------------
 
         user = models.User(
@@ -561,9 +561,10 @@ async def auth0_callback(
             ),
 
             auth0_id=auth0_id,
-            auth_provider="auth0",
 
-            plan_id=(
+            provider="google",
+
+            subscription_plan_id=(
                 basic_plan.id
                 if basic_plan
                 else None
@@ -580,7 +581,6 @@ async def auth0_callback(
     else:
 
         user.auth0_id = auth0_id
-        user.auth_provider = "auth0"
 
 
     # --------------------------------------------------------
