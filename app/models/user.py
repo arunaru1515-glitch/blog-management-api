@@ -25,9 +25,18 @@ class User(Base):
         unique=True
     )
 
+    # Password is optional for Auth0 social-login users
     password = Column(
         String,
-        nullable=False
+        nullable=True
+    )
+
+    # Authentication provider:
+    # local / google / facebook
+    provider = Column(
+        String,
+        nullable=False,
+        default="local"
     )
 
     # Posts created by the user

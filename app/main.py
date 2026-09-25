@@ -1,6 +1,7 @@
 ﻿from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.database.database import Base, engine
 
@@ -56,7 +57,17 @@ app = FastAPI(
 
 
 # ============================================================
-# SERVE UPLOADED MEDIA FILES
+# SESSION MIDDLEWARE
+# ============================================================
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="your-secret-key-change-this"
+)
+
+
+# ============================================================
+# SERVE MEDIA FILES
 # ============================================================
 
 app.mount(
@@ -67,7 +78,7 @@ app.mount(
 
 
 # ============================================================
-# SERVE FRONTEND STATIC FILES
+# SERVE STATIC FRONTEND FILES
 # ============================================================
 
 app.mount(
@@ -78,7 +89,7 @@ app.mount(
 
 
 # ============================================================
-# AUTHENTICATION ROUTES
+# AUTH ROUTES
 # ============================================================
 
 app.include_router(auth.router)
@@ -113,7 +124,7 @@ app.include_router(subscriptions.router)
 
 
 # ============================================================
-# USER DASHBOARD API ROUTES
+# DASHBOARD API ROUTES
 # ============================================================
 
 app.include_router(dashboard.router)
@@ -134,11 +145,24 @@ app.include_router(ai_support.router)
 
 
 # ============================================================
+# LOGIN FRONTEND PAGE
+# ============================================================
+
+@app.get("/login")
+def login_page():
+
+    return FileResponse(
+        "static/login.html"
+    )
+
+
+# ============================================================
 # DASHBOARD FRONTEND PAGE
 # ============================================================
 
 @app.get("/dashboard")
 def dashboard_page():
+
     return FileResponse(
         "static/dashboard.html"
     )
@@ -150,6 +174,7 @@ def dashboard_page():
 
 @app.get("/ai-support")
 def ai_support_page():
+
     return FileResponse(
         "static/ai_support/ai_support.html"
     )
@@ -161,6 +186,8 @@ def ai_support_page():
 
 @app.get("/")
 def root():
-    return {
-        "message": "Blog Management API is running"
-    }
+
+    return RedirectResponse(
+        url="/login",
+        status_code=302
+    )
