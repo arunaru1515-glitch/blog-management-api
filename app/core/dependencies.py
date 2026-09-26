@@ -7,37 +7,48 @@ from app.database.database import get_db
 from app.models.user import User
 
 
+# ============================================================
+# OAUTH2 CONFIGURATION
+# ============================================================
+
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/password-login",
+    tokenUrl="/auth/login",
     auto_error=False
 )
 
+
+# ============================================================
+# GET CURRENT USER
+# ============================================================
 
 def get_current_user(
     request: Request,
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-    # ============================================================
+
+    # ========================================================
     # 1. TRY TO GET TOKEN FROM AUTHORIZATION HEADER
-    # ============================================================
+    # ========================================================
 
     access_token = token
 
-    # ============================================================
+    # ========================================================
     # 2. IF NO HEADER TOKEN, GET TOKEN FROM SESSION
-    # ============================================================
+    # ========================================================
 
     if not access_token:
+
         access_token = request.session.get(
             "access_token"
         )
 
-    # ============================================================
+    # ========================================================
     # 3. CHECK TOKEN
-    # ============================================================
+    # ========================================================
 
     if not access_token:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
@@ -46,15 +57,16 @@ def get_current_user(
             }
         )
 
-    # ============================================================
+    # ========================================================
     # 4. DECODE TOKEN
-    # ============================================================
+    # ========================================================
 
     payload = decode_access_token(
         access_token
     )
 
     if payload is None:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
@@ -63,13 +75,14 @@ def get_current_user(
             }
         )
 
-    # ============================================================
+    # ========================================================
     # 5. GET USER ID FROM TOKEN
-    # ============================================================
+    # ========================================================
 
     user_id = payload.get("sub")
 
     if user_id is None:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
@@ -78,11 +91,12 @@ def get_current_user(
             }
         )
 
-    # ============================================================
-    # 6. CONVERT USER ID
-    # ============================================================
+    # ========================================================
+    # 6. CONVERT USER ID TO INTEGER
+    # ========================================================
 
     try:
+
         user_id = int(user_id)
 
     except (TypeError, ValueError):
@@ -95,15 +109,20 @@ def get_current_user(
             }
         )
 
-    # ============================================================
+    # ========================================================
     # 7. FIND USER IN DATABASE
-    # ============================================================
+    # ========================================================
 
-    user = db.query(User).filter(
-        User.id == user_id
-    ).first()
+    user = (
+        db.query(User)
+        .filter(
+            User.id == user_id
+        )
+        .first()
+    )
 
     if user is None:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
@@ -112,8 +131,8 @@ def get_current_user(
             }
         )
 
-    # ============================================================
+    # ========================================================
     # 8. RETURN CURRENT USER
-    # ============================================================
+    # ========================================================
 
     return user

@@ -28,6 +28,7 @@ from app.core.auth import (
     create_access_token,
 )
 
+
 # ============================================================
 # LOAD ENVIRONMENT VARIABLES
 # ============================================================
@@ -49,11 +50,17 @@ router = APIRouter(
 # AUTH0 CONFIGURATION
 # ============================================================
 
-AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
+AUTH0_DOMAIN = os.getenv(
+    "AUTH0_DOMAIN"
+)
 
-AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
+AUTH0_CLIENT_ID = os.getenv(
+    "AUTH0_CLIENT_ID"
+)
 
-AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
+AUTH0_CLIENT_SECRET = os.getenv(
+    "AUTH0_CLIENT_SECRET"
+)
 
 AUTH0_CALLBACK_URL = os.getenv(
     "AUTH0_CALLBACK_URL",
@@ -62,7 +69,7 @@ AUTH0_CALLBACK_URL = os.getenv(
 
 
 # ============================================================
-# GOOGLE / FACEBOOK CONNECTIONS
+# AUTH0 CONNECTIONS
 # ============================================================
 
 GOOGLE_CONNECTION = os.getenv(
@@ -82,19 +89,25 @@ FACEBOOK_CONNECTION = os.getenv(
 
 oauth = OAuth()
 
+
 if (
     AUTH0_DOMAIN
     and AUTH0_CLIENT_ID
     and AUTH0_CLIENT_SECRET
 ):
+
     oauth.register(
         name="auth0",
+
         client_id=AUTH0_CLIENT_ID,
+
         client_secret=AUTH0_CLIENT_SECRET,
+
         server_metadata_url=(
             f"https://{AUTH0_DOMAIN}/"
             ".well-known/openid-configuration"
         ),
+
         client_kwargs={
             "scope": "openid profile email"
         },
@@ -102,7 +115,7 @@ if (
 
 
 # ============================================================
-# AUTH0 CONFIG CHECK
+# AUTH0 CONFIGURATION CHECK
 # ============================================================
 
 def check_auth0_config():
@@ -133,7 +146,7 @@ def check_auth0_config():
 
 
 # ============================================================
-# REGISTER
+# NORMAL USER REGISTRATION
 # ============================================================
 
 @router.post(
@@ -159,6 +172,7 @@ def register(
     )
 
     if existing_username:
+
         raise HTTPException(
             status_code=400,
             detail="Username already registered"
@@ -178,6 +192,7 @@ def register(
     )
 
     if existing_email:
+
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
@@ -202,7 +217,9 @@ def register(
     # --------------------------------------------------------
 
     new_user = models.User(
+
         username=user_in.username,
+
         email=user_in.email,
 
         password=hash_password(
@@ -220,14 +237,16 @@ def register(
 
 
     db.add(new_user)
+
     db.commit()
+
     db.refresh(new_user)
 
     return new_user
 
 
 # ============================================================
-# LOGIN
+# NORMAL LOGIN
 # ============================================================
 
 @router.post(
@@ -243,14 +262,14 @@ def login(
 ):
 
     # --------------------------------------------------------
-    # GET USERNAME / EMAIL
+    # GET LOGIN VALUE
     # --------------------------------------------------------
 
     login_value = form_data.username.strip()
 
 
     # --------------------------------------------------------
-    # FIND USER BY USERNAME OR EMAIL
+    # FIND USER
     # --------------------------------------------------------
 
     user = (
@@ -269,9 +288,12 @@ def login(
     # --------------------------------------------------------
 
     if not user:
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+
             detail="Incorrect email/username or password",
+
             headers={
                 "WWW-Authenticate": "Bearer"
             }
@@ -282,13 +304,19 @@ def login(
     # VERIFY PASSWORD
     # --------------------------------------------------------
 
-    if not user.password or not verify_password(
-        form_data.password,
-        user.password
+    if (
+        not user.password
+        or not verify_password(
+            form_data.password,
+            user.password
+        )
     ):
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+
             detail="Incorrect email/username or password",
+
             headers={
                 "WWW-Authenticate": "Bearer"
             }
@@ -311,6 +339,7 @@ def login(
     # --------------------------------------------------------
 
     request.session["access_token"] = access_token
+
     request.session["user_id"] = user.id
 
 
@@ -325,7 +354,7 @@ def login(
 
 
 # ============================================================
-# GOOGLE LOGIN
+# GOOGLE LOGIN USING AUTH0
 # ============================================================
 
 @router.get("/google")
@@ -336,14 +365,17 @@ async def google_login(
     check_auth0_config()
 
     return await oauth.auth0.authorize_redirect(
+
         request,
+
         AUTH0_CALLBACK_URL,
+
         connection=GOOGLE_CONNECTION
     )
 
 
 # ============================================================
-# FACEBOOK LOGIN
+# FACEBOOK LOGIN USING AUTH0
 # ============================================================
 
 @router.get("/facebook")
@@ -354,8 +386,11 @@ async def facebook_login(
     check_auth0_config()
 
     return await oauth.auth0.authorize_redirect(
+
         request,
+
         AUTH0_CALLBACK_URL,
+
         connection=FACEBOOK_CONNECTION
     )
 
@@ -366,8 +401,11 @@ async def facebook_login(
 
 @router.get("/callback")
 async def auth0_callback(
+
     request: Request,
+
     db: Session = Depends(get_db)
+
 ):
 
     check_auth0_config()
@@ -391,8 +429,12 @@ async def auth0_callback(
         )
 
         raise HTTPException(
+
             status_code=400,
-            detail=f"Auth0 login failed: {str(exc)}"
+
+            detail=(
+                f"Auth0 login failed: {str(exc)}"
+            )
         )
 
 
@@ -400,11 +442,13 @@ async def auth0_callback(
     # GET USER INFORMATION
     # --------------------------------------------------------
 
-    userinfo = token.get("userinfo")
+    userinfo = token.get(
+        "userinfo"
+    )
 
 
     # --------------------------------------------------------
-    # IF USERINFO IS NOT IN TOKEN
+    # GET USERINFO FROM AUTH0 USERINFO ENDPOINT
     # --------------------------------------------------------
 
     if not userinfo:
@@ -421,7 +465,9 @@ async def auth0_callback(
         except Exception as exc:
 
             raise HTTPException(
+
                 status_code=400,
+
                 detail=(
                     "Unable to retrieve Auth0 "
                     f"user information: {str(exc)}"
@@ -433,8 +479,21 @@ async def auth0_callback(
     # GET AUTH0 USER DETAILS
     # --------------------------------------------------------
 
-    auth0_id = userinfo.get("sub")
-    email = userinfo.get("email")
+    auth0_id = userinfo.get(
+        "sub"
+    )
+
+    email = userinfo.get(
+        "email"
+    )
+
+    name = userinfo.get(
+        "name"
+    )
+
+    nickname = userinfo.get(
+        "nickname"
+    )
 
 
     # --------------------------------------------------------
@@ -444,7 +503,9 @@ async def auth0_callback(
     if not auth0_id:
 
         raise HTTPException(
+
             status_code=400,
+
             detail="Auth0 user ID was not provided"
         )
 
@@ -456,12 +517,31 @@ async def auth0_callback(
     if not email:
 
         raise HTTPException(
+
             status_code=400,
+
             detail=(
                 "Email was not provided by "
                 "Google/Facebook"
             )
         )
+
+
+    # --------------------------------------------------------
+    # DETERMINE LOGIN PROVIDER
+    # --------------------------------------------------------
+
+    if auth0_id.startswith("google-oauth2|"):
+
+        provider = "google"
+
+    elif auth0_id.startswith("facebook|"):
+
+        provider = "facebook"
+
+    else:
+
+        provider = "auth0"
 
 
     # --------------------------------------------------------
@@ -478,7 +558,8 @@ async def auth0_callback(
 
 
     # --------------------------------------------------------
-    # IF NOT FOUND, FIND USING EMAIL
+    # IF AUTH0 ID NOT FOUND
+    # FIND USER USING EMAIL
     # --------------------------------------------------------
 
     if not user:
@@ -498,14 +579,21 @@ async def auth0_callback(
 
     if not user:
 
+        # ----------------------------------------------------
+        # CREATE USERNAME
+        # ----------------------------------------------------
+
         username = (
-            userinfo.get("nickname")
-            or userinfo.get("name")
+            nickname
+            or name
             or email.split("@")[0]
         )
 
 
-        # Replace spaces
+        # ----------------------------------------------------
+        # CLEAN USERNAME
+        # ----------------------------------------------------
+
         username = username.replace(
             " ",
             "_"
@@ -513,6 +601,7 @@ async def auth0_callback(
 
 
         base_username = username
+
         counter = 1
 
 
@@ -536,7 +625,7 @@ async def auth0_callback(
 
 
         # ----------------------------------------------------
-        # GET BASIC PLAN
+        # GET BASIC SUBSCRIPTION PLAN
         # ----------------------------------------------------
 
         basic_plan = (
@@ -553,7 +642,9 @@ async def auth0_callback(
         # ----------------------------------------------------
 
         user = models.User(
+
             username=username,
+
             email=email,
 
             password=hash_password(
@@ -562,7 +653,7 @@ async def auth0_callback(
 
             auth0_id=auth0_id,
 
-            provider="google",
+            provider=provider,
 
             subscription_plan_id=(
                 basic_plan.id
@@ -570,6 +661,7 @@ async def auth0_callback(
                 else None
             )
         )
+
 
         db.add(user)
 
@@ -580,7 +672,17 @@ async def auth0_callback(
 
     else:
 
+        # ----------------------------------------------------
+        # UPDATE AUTH0 ID
+        # ----------------------------------------------------
+
         user.auth0_id = auth0_id
+
+        # ----------------------------------------------------
+        # UPDATE PROVIDER
+        # ----------------------------------------------------
+
+        user.provider = provider
 
 
     # --------------------------------------------------------
@@ -588,6 +690,7 @@ async def auth0_callback(
     # --------------------------------------------------------
 
     db.commit()
+
     db.refresh(user)
 
 
@@ -596,6 +699,7 @@ async def auth0_callback(
     # --------------------------------------------------------
 
     access_token = create_access_token(
+
         data={
             "sub": str(user.id)
         }
@@ -607,6 +711,7 @@ async def auth0_callback(
     # --------------------------------------------------------
 
     request.session["access_token"] = access_token
+
     request.session["user_id"] = user.id
 
 
@@ -615,7 +720,9 @@ async def auth0_callback(
     # --------------------------------------------------------
 
     return RedirectResponse(
+
         url="/dashboard",
+
         status_code=302
     )
 
@@ -645,14 +752,19 @@ async def get_session(
     if not access_token:
 
         raise HTTPException(
+
             status_code=401,
+
             detail="No active login session"
         )
 
 
     return {
+
         "authenticated": True,
+
         "access_token": access_token,
+
         "user_id": user_id
     }
 
@@ -669,5 +781,6 @@ async def logout(
     request.session.clear()
 
     return {
+
         "message": "Logged out successfully"
     }
