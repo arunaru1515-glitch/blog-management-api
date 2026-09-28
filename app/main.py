@@ -1,4 +1,6 @@
-﻿from fastapi import FastAPI
+﻿from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
@@ -46,13 +48,36 @@ Base.metadata.create_all(bind=engine)
 
 
 # ============================================================
+# APPLICATION LIFESPAN
+# ============================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    # ========================================================
+    # APPLICATION STARTUP
+    # ========================================================
+
+    print("Blog Management API started.")
+
+    yield
+
+    # ========================================================
+    # APPLICATION SHUTDOWN
+    # ========================================================
+
+    print("Blog Management API stopped.")
+
+
+# ============================================================
 # FASTAPI APPLICATION
 # ============================================================
 
 app = FastAPI(
     title="Blog Management API",
     description="Mini Blog Management System using FastAPI",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 
@@ -92,56 +117,72 @@ app.mount(
 # AUTH ROUTES
 # ============================================================
 
-app.include_router(auth.router)
+app.include_router(
+    auth.router
+)
 
 
 # ============================================================
 # POST ROUTES
 # ============================================================
 
-app.include_router(posts.router)
+app.include_router(
+    posts.router
+)
 
 
 # ============================================================
 # COMMENT ROUTES
 # ============================================================
 
-app.include_router(comments.router)
+app.include_router(
+    comments.router
+)
 
 
 # ============================================================
 # LIKE ROUTES
 # ============================================================
 
-app.include_router(likes.router)
+app.include_router(
+    likes.router
+)
 
 
 # ============================================================
 # SUBSCRIPTION ROUTES
 # ============================================================
 
-app.include_router(subscriptions.router)
+app.include_router(
+    subscriptions.router
+)
 
 
 # ============================================================
 # DASHBOARD API ROUTES
 # ============================================================
 
-app.include_router(dashboard.router)
+app.include_router(
+    dashboard.router
+)
 
 
 # ============================================================
 # NOTIFICATION ROUTES
 # ============================================================
 
-app.include_router(notifications.router)
+app.include_router(
+    notifications.router
+)
 
 
 # ============================================================
 # AI SUPPORT ROUTES
 # ============================================================
 
-app.include_router(ai_support.router)
+app.include_router(
+    ai_support.router
+)
 
 
 # ============================================================

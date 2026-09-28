@@ -72,8 +72,19 @@ class BillingHistoryOut(BaseModel):
 # ============================================================
 
 class PostCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    content: str = Field(..., min_length=1)
+    title: str = Field(
+        ...,
+        min_length=1,
+        max_length=200
+    )
+
+    content: str = Field(
+        ...,
+        min_length=1
+    )
+
+    # Scheduled publishing
+    scheduled_at: datetime | None = None
 
 
 class PostUpdate(BaseModel):
@@ -88,14 +99,27 @@ class PostUpdate(BaseModel):
         min_length=1
     )
 
+    # Scheduled publishing
+    scheduled_at: datetime | None = None
+
 
 class PostResponse(BaseModel):
     id: int
     title: str
     content: str
+
     image: str | None = None
+
     author_id: int
+
     created_at: datetime
+
+    # Publishing fields
+    status: str
+
+    scheduled_at: datetime | None = None
+
+    published_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -113,7 +137,11 @@ class PaginatedPostOut(BaseModel):
 # ============================================================
 
 class CommentCreate(BaseModel):
-    text: str = Field(..., min_length=1, max_length=1000)
+    text: str = Field(
+        ...,
+        min_length=1,
+        max_length=1000
+    )
 
 
 class CommentResponse(BaseModel):

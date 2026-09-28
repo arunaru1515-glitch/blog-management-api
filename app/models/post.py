@@ -36,6 +36,30 @@ class Post(Base):
         nullable=False
     )
 
+    # =====================================================
+    # Scheduled Blog Publishing
+    # =====================================================
+
+    status = Column(
+        String,
+        default="Published",
+        nullable=False
+    )
+
+    scheduled_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    published_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    # =====================================================
+    # Author
+    # =====================================================
+
     author_id = Column(
         Integer,
         ForeignKey("users.id"),

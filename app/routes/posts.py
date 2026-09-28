@@ -1,5 +1,6 @@
 ﻿import os
 import uuid
+from datetime import datetime
 
 from fastapi import (
     APIRouter,
@@ -36,16 +37,122 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 # ============================================================
 # CREATE POST
 # TASK 1/2 + TASK 3 SUBSCRIPTION ACCESS CONTROL
+# + SCHEDULED BLOG PUBLISHING
 # ============================================================
 
 @router.post("/", response_model=PostResponse)
 def create_post(
     title: str = Form(..., min_length=1, max_length=200),
     content: str = Form(..., min_length=1),
+
+    # Publishing option:
+    # publish = Publish Now
+    # draft = Save as Draft
+    # schedule = Schedule Post
+    publish_option: str = Form("publish"),
+
+    # Required when publish_option = schedule
+    scheduled_at: str | None = Form(None),
+
     image: UploadFile | None = File(None),
+
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # ========================================================
+    # VALIDATE PUBLISH OPTION
+    # ========================================================
+
+    allowed_publish_options = {
+        "publish",
+        "draft",
+        "schedule"
+    }
+
+    if publish_option not in allowed_publish_options:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Invalid publish option. "
+                "Use 'publish', 'draft' or 'schedule'."
+            )
+        )
+
+    # ========================================================
+    # PARSE SCHEDULED DATE
+    # ========================================================
+
+    scheduled_datetime = None
+
+    if scheduled_at:
+
+        try:
+            scheduled_datetime = datetime.fromisoformat(
+                scheduled_at
+            )
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Invalid scheduled_at format. "
+                    "Use YYYY-MM-DDTHH:MM:SS."
+                )
+            )
+
+    # ========================================================
+    # PUBLISHING VALIDATION
+    # ========================================================
+
+    # --------------------------------------------------------
+    # DRAFT
+    # --------------------------------------------------------
+
+    if publish_option == "draft":
+
+        if scheduled_datetime is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Draft posts cannot have a scheduled date."
+                )
+            )
+
+    # --------------------------------------------------------
+    # SCHEDULE
+    # --------------------------------------------------------
+
+    if publish_option == "schedule":
+
+        if scheduled_datetime is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "scheduled_at is required when scheduling a post."
+                )
+            )
+
+        if scheduled_datetime <= datetime.now():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Scheduled time must be in the future."
+                )
+            )
+
+    # --------------------------------------------------------
+    # PUBLISH NOW
+    # --------------------------------------------------------
+
+    if publish_option == "publish":
+
+        if scheduled_datetime is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Publish Now cannot have a scheduled date."
+                )
+            )
 
     # ========================================================
     # TASK 3 - CHECK ACTIVE SUBSCRIPTION
@@ -73,7 +180,10 @@ def create_post(
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You've reached your plan limit. Kindly upgrade your plan to continue."
+            detail=(
+                "You've reached your plan limit. "
+                "Kindly upgrade your plan to continue."
+            )
         )
 
     # ========================================================
@@ -90,7 +200,11 @@ def create_post(
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Image uploads are not available on your current plan. Kindly upgrade your plan to continue."
+                detail=(
+                    "Image uploads are not available on your "
+                    "current plan. Kindly upgrade your plan "
+                    "to continue."
+                )
             )
 
         # Allowed image formats
@@ -109,7 +223,10 @@ def create_post(
         if file_extension not in allowed_extensions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only JPG, JPEG, PNG, GIF and WEBP images are allowed"
+                detail=(
+                    "Only JPG, JPEG, PNG, GIF and WEBP "
+                    "images are allowed"
+                )
             )
 
         # Generate unique filename
@@ -127,6 +244,27 @@ def create_post(
         image_path = f"/media/posts/{filename}"
 
     # ========================================================
+    # DETERMINE POST STATUS
+    # ========================================================
+
+    if publish_option == "draft":
+
+        post_status = "Draft"
+        published_datetime = None
+        scheduled_datetime = None
+
+    elif publish_option == "schedule":
+
+        post_status = "Scheduled"
+        published_datetime = None
+
+    else:
+
+        post_status = "Published"
+        published_datetime = datetime.now()
+        scheduled_datetime = None
+
+    # ========================================================
     # CREATE POST
     # ========================================================
 
@@ -134,7 +272,10 @@ def create_post(
         title=title,
         content=content,
         image=image_path,
-        author_id=current_user.id
+        author_id=current_user.id,
+        status=post_status,
+        scheduled_at=scheduled_datetime,
+        published_at=published_datetime
     )
 
     db.add(new_post)
@@ -250,14 +391,24 @@ def get_post(
 
 # ============================================================
 # UPDATE OWN POST
+# + SCHEDULED BLOG PUBLISHING
 # ============================================================
 
 @router.put("/{post_id}", response_model=PostResponse)
 def update_post(
     post_id: int,
+
     title: str = Form(..., min_length=1, max_length=200),
     content: str = Form(..., min_length=1),
+
+    # Publishing option during update
+    publish_option: str | None = Form(None),
+
+    # Schedule date/time during update
+    scheduled_at: str | None = Form(None),
+
     image: UploadFile | None = File(None),
+
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -294,6 +445,111 @@ def update_post(
     post.content = content
 
     # ========================================================
+    # HANDLE PUBLISHING OPTION
+    # ========================================================
+
+    if publish_option is not None:
+
+        allowed_publish_options = {
+            "publish",
+            "draft",
+            "schedule"
+        }
+
+        if publish_option not in allowed_publish_options:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Invalid publish option. "
+                    "Use 'publish', 'draft' or 'schedule'."
+                )
+            )
+
+        # ----------------------------------------------------
+        # PARSE SCHEDULED DATE
+        # ----------------------------------------------------
+
+        scheduled_datetime = None
+
+        if scheduled_at:
+
+            try:
+                scheduled_datetime = datetime.fromisoformat(
+                    scheduled_at
+                )
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Invalid scheduled_at format. "
+                        "Use YYYY-MM-DDTHH:MM:SS."
+                    )
+                )
+
+        # ----------------------------------------------------
+        # DRAFT
+        # ----------------------------------------------------
+
+        if publish_option == "draft":
+
+            if scheduled_datetime is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Draft posts cannot have a scheduled date."
+                    )
+                )
+
+            post.status = "Draft"
+            post.scheduled_at = None
+            post.published_at = None
+
+        # ----------------------------------------------------
+        # SCHEDULE
+        # ----------------------------------------------------
+
+        elif publish_option == "schedule":
+
+            if scheduled_datetime is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "scheduled_at is required when "
+                        "scheduling a post."
+                    )
+                )
+
+            if scheduled_datetime <= datetime.now():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Scheduled time must be in the future."
+                    )
+                )
+
+            post.status = "Scheduled"
+            post.scheduled_at = scheduled_datetime
+            post.published_at = None
+
+        # ----------------------------------------------------
+        # PUBLISH NOW
+        # ----------------------------------------------------
+
+        elif publish_option == "publish":
+
+            if scheduled_datetime is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Publish Now cannot have a scheduled date."
+                    )
+                )
+
+            post.status = "Published"
+            post.scheduled_at = None
+            post.published_at = datetime.now()
+
+    # ========================================================
     # UPDATE IMAGE
     # ========================================================
 
@@ -313,7 +569,11 @@ def update_post(
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Image uploads are not available on your current plan. Kindly upgrade your plan to continue."
+                detail=(
+                    "Image uploads are not available on your "
+                    "current plan. Kindly upgrade your plan "
+                    "to continue."
+                )
             )
 
         # Allowed image formats
@@ -332,7 +592,10 @@ def update_post(
         if file_extension not in allowed_extensions:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Only JPG, JPEG, PNG, GIF and WEBP images are allowed"
+                detail=(
+                    "Only JPG, JPEG, PNG, GIF and WEBP "
+                    "images are allowed"
+                )
             )
 
         # Generate unique filename
