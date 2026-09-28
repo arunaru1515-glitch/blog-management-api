@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Create Blog Post</title>
+
+    <!-- CREATE POST CSS -->
+    <link
+        rel="stylesheet"
+        href="/static/create-post.css"
+    >
+</head>
+
+<body>
+
+    <div class="page-container">
+
+        <!-- ==================================================
+             PAGE HEADER
+        =================================================== -->
+
+        <header class="page-header">
+
+            <div class="header-content">
+
+                <span class="page-badge">
+                    BLOG MANAGEMENT
+                </span>
+
+                <h1>
+                    Create Blog Post
+                </h1>
+
+                <p>
+                    Create, publish or schedule your blog post.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="back-button"
+                onclick="goToDashboard()"
+            >
+                ← Dashboard
+            </button>
+
+        </header>
+
+
+        <!-- ==================================================
+             CREATE POST CARD
+        =================================================== -->
+
+        <main class="post-card">
+
+            <form id="createPostForm">
+
+                <!-- ==================================================
+                     BLOG TITLE
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Blog Title
+                    </label>
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="Enter your blog title"
+                        maxlength="200"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- ==================================================
+                     BLOG CONTENT
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label for="content">
+                        Blog Content
+                    </label>
+
+                    <textarea
+                        id="content"
+                        name="content"
+                        placeholder="Write your blog content..."
+                        required
+                    ></textarea>
+
+                </div>
+
+
+                <!-- ==================================================
+                     BLOG IMAGE
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label for="image">
+                        Blog Image
+                    </label>
+
+                    <div class="file-wrapper">
+
+                        <input
+                            type="file"
+                            id="image"
+                            name="image"
+                            accept=".jpg,.jpeg,.png,.gif,.webp"
+                        >
+
+                    </div>
+
+                    <small class="help-text">
+                        Allowed formats: JPG, JPEG, PNG, GIF, WEBP
+                    </small>
+
+                </div>
+
+
+                <!-- ==================================================
+                     PUBLISHING OPTIONS
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Publishing Option
+                    </label>
+
+                    <div class="publishing-options">
+
+                        <!-- PUBLISH NOW -->
+
+                        <label class="option-card">
+
+                            <input
+                                type="radio"
+                                name="publish_option"
+                                value="publish"
+                                checked
+                            >
+
+                            <span class="option-content">
+
+                                <strong>
+                                    Publish Now
+                                </strong>
+
+                                <small>
+                                    Publish this blog immediately.
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- SAVE AS DRAFT -->
+
+                        <label class="option-card">
+
+                            <input
+                                type="radio"
+                                name="publish_option"
+                                value="draft"
+                            >
+
+                            <span class="option-content">
+
+                                <strong>
+                                    Save as Draft
+                                </strong>
+
+                                <small>
+                                    Save the blog without publishing it.
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- SCHEDULE POST -->
+
+                        <label class="option-card">
+
+                            <input
+                                type="radio"
+                                name="publish_option"
+                                value="schedule"
+                                id="scheduleOption"
+                            >
+
+                            <span class="option-content">
+
+                                <strong>
+                                    Schedule Post
+                                </strong>
+
+                                <small>
+                                    Publish the blog automatically later.
+                                </small>
+
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     SCHEDULE DATE & TIME
+                ================================================== -->
+
+                <div
+                    id="scheduleFields"
+                    class="schedule-fields hidden"
+                >
+
+                    <div class="schedule-grid">
+
+                        <!-- DATE -->
+
+                        <div class="form-group">
+
+                            <label for="scheduledDate">
+                                Schedule Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="scheduledDate"
+                                name="scheduledDate"
+                            >
+
+                        </div>
+
+
+                        <!-- TIME -->
+
+                        <div class="form-group">
+
+                            <label for="scheduledTime">
+                                Schedule Time
+                            </label>
+
+                            <input
+                                type="time"
+                                id="scheduledTime"
+                                name="scheduledTime"
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <p class="schedule-note">
+                        Select a future date and time for automatic publishing.
+                    </p>
+
+                </div>
+
+
+                <!-- ==================================================
+                     MESSAGE
+                ================================================== -->
+
+                <div
+                    id="message"
+                    class="message"
+                ></div>
+
+
+                <!-- ==================================================
+                     ACTION BUTTONS
+                ================================================== -->
+
+                <div class="form-actions">
+
+                    <button
+                        type="button"
+                        class="cancel-button"
+                        onclick="goToDashboard()"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="submit-button"
+                    >
+                        Create Post
+                    </button>
+
+                </div>
+
+            </form>
+
+        </main>
+
+
+        <!-- ==================================================
+             FOOTER
+        ================================================== -->
+
+        <footer class="page-footer">
+
+            <p>
+                Blog Management System
+            </p>
+
+        </footer>
+
+    </div>
+
+
+    <!-- ==================================================
+         CREATE POST JAVASCRIPT
+    ================================================== -->
+
+    <script src="/static/create-post.js"></script>  
+
+</body>
+
+</html>

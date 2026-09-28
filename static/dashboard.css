@@ -1346,3 +1346,72 @@ body {
         display: none;
     }
 }
+
+/* =========================================================
+   CREATE POST BUTTON - ONLY
+========================================================= */
+
+.header-actions .create-post-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 130px !important;
+    height: 44px !important;
+
+    padding: 0 18px !important;
+    margin: 0 !important;
+
+    box-sizing: border-box !important;
+
+    background: #6366f1 !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    font-family: inherit !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+
+    line-height: 1 !important;
+    text-decoration: none !important;
+
+    cursor: pointer !important;
+
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.22) !important;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease !important;
+}
+
+
+/* HOVER */
+
+.header-actions .create-post-button:hover {
+    background: #4f46e5 !important;
+
+    transform: translateY(-2px) !important;
+
+    box-shadow:
+        0 10px 22px rgba(99, 102, 241, 0.30) !important;
+}
+
+
+/* CLICK */
+
+.header-actions .create-post-button:active {
+    transform: translateY(0) !important;
+
+    box-shadow:
+        0 5px 12px rgba(99, 102, 241, 0.20) !important;
+}
+
+
+/* FOCUS */
+
+.header-actions .create-post-button:focus {
+    outline: none !important;
+}

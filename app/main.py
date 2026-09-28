@@ -210,6 +210,18 @@ def dashboard_page():
 
 
 # ============================================================
+# CREATE POST FRONTEND PAGE
+# ============================================================
+
+@app.get("/create-post")
+def create_post_page():
+
+    return FileResponse(
+        "static/create-post.html"
+    )
+
+
+# ============================================================
 # AI SUPPORT FRONTEND PAGE
 # ============================================================
 
